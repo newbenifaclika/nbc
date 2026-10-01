@@ -1,9 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-const root=path.resolve(new URL('..',import.meta.url).pathname);
+import { fileURLToPath } from 'node:url';
+const root=fileURLToPath(new URL('..',import.meta.url));
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const html=read('public/index.html'),js=read('public/app.js'),worker=read('src/worker.js'),schema=read('schema.sql');
 const checks=[
+  ['No duplicate frontend files at repository root',!['index.html','app.css','app.js','sw.js','manifest.webmanifest'].some(file=>fs.existsSync(path.join(root,file)))],
+  ['Cloudflare configuration has no placeholders',!/PASTE_YOUR|ID_REAL|YOUR_DATABASE_ID/.test(read('wrangler.jsonc'))],
   ['No Supabase in frontend',!/supabase/i.test(js+html)],
   ['No lyrics feature',!/lyrics|letra/i.test(js+html)],
   ['No sharing feature',!/navigator\.share|shareTrack|shareAlbum|shareArtist/i.test(js+html)],
