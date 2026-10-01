@@ -351,3 +351,12 @@ input[type=file]::file-selector-button{margin-right:12px;padding:7px 10px;border
 button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:.55;cursor:wait}
 #albumCoverSummary{display:block;color:var(--muted);font-size:12px;margin-top:8px;overflow-wrap:anywhere}
 @media(max-width:760px){.draft-note{align-items:flex-start;flex-direction:column;gap:4px}#albumUploadForm footer{flex-wrap:wrap}#albumUploadForm footer button{flex:1}}
+
+/* A short touch response and a visible elapsed segment in both players. */
+.play-btn.play-feedback{animation:transport-tap .28s cubic-bezier(.2,.8,.3,1)}
+.play-btn.play-feedback .play-icon{animation:transport-icon .24s ease-out}
+@keyframes transport-tap{0%{transform:scale(1)}35%{transform:scale(.89)}70%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes transport-icon{0%{opacity:.45;transform:scale(.75)}100%{opacity:1;transform:scale(1)}}
+#progress::-webkit-slider-runnable-track,#nowProgress::-webkit-slider-runnable-track{background:linear-gradient(to right,var(--active) 0%,var(--active) var(--played,0%),#4c535e var(--played,0%),#4c535e 100%)}
+#progress::-moz-range-progress,#nowProgress::-moz-range-progress{height:3px;border-radius:99px;background:var(--active)}
+@media(prefers-reduced-motion:reduce){.play-btn.play-feedback,.play-btn.play-feedback .play-icon{animation:none}}
