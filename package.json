@@ -1,0 +1,16 @@
+{
+  "name": "new-benifaclika-cloudflare",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:local": "wrangler d1 execute new-benifaclika-db --local --file=./schema.sql",
+    "db:remote": "wrangler d1 execute new-benifaclika-db --remote --file=./schema.sql",
+    "test": "node scripts/check.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.45.0"
+  }
+}

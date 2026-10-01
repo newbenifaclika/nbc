@@ -1,0 +1,13 @@
+{
+  "name": "New BenifaClika",
+  "short_name": "BenifaClika",
+  "description": "Biblioteca musical de New BenifaClika",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090a0d",
+  "theme_color": "#090a0d",
+  "icons": [
+    {"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}

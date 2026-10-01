@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090a0d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="New BenifaClika">
+  <meta name="description" content="Biblioteca musical de New BenifaClika">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <link rel="stylesheet" href="/app.css">
+  <title>New BenifaClika</title>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <button class="brand" data-nav="home" aria-label="Ir al inicio">
+      <span class="brand-mark">NBC</span>
+      <span class="brand-copy"><strong>New BenifaClika</strong><small>Music Library</small></span>
+    </button>
+    <nav class="side-nav">
+      <button class="nav-btn active" data-nav="home"><span class="nav-icon">⌂</span><span>Inicio</span></button>
+      <button class="nav-btn" data-nav="songs"><span class="nav-icon">♫</span><span>Canciones</span></button>
+      <button class="nav-btn" data-nav="albums"><span class="nav-icon">▣</span><span>Álbumes</span></button>
+      <button class="nav-btn" data-nav="artists"><span class="nav-icon">◎</span><span>Artistas</span></button>
+      <button class="nav-btn" id="sideEditBtn"><span class="nav-icon">✎</span><span>Editar</span></button>
+    </nav>
+    <div class="side-footer"><strong>Made by srthegato</strong></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="top-title"><h1>New BenifaClika</h1><p>La biblioteca de la clika.</p></div>
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input id="globalSearch" type="search" autocomplete="off" placeholder="Buscar canción, artista o álbum">
+        <div id="searchSuggest" class="search-suggest"></div>
+      </div>
+      <div class="top-actions"><button id="installBtn" class="pill install-btn">Instalar</button><button id="editBtn" class="pill">✎ Editar</button></div>
+    </header>
+
+    <section id="view-home" class="view active">
+      <div class="home-heading"><h2>La música de la clika, en un solo sitio.</h2></div>
+      <section class="anniversary-banner">
+        <div class="anniversary-top"><span>1ER ANIVERSARIO</span><small id="anniversaryCounts">0 temas · 0 álbumes</small></div>
+        <strong>🥂🖤 Broskis, açò només comença. Feliç aniversari BENIFACLIKAAAAA!!! 🎉🔥</strong>
+      </section>
+      <section class="content-section"><div class="section-head"><div><h2>Últimos lanzamientos</h2><p>Lo más nuevo de la clika</p></div></div><div id="homeReleases" class="card-grid"></div></section>
+      <section class="content-section"><div class="section-head"><div><h2>Artistas</h2></div></div><div id="homeArtists" class="artist-strip"></div></section>
+    </section>
+
+    <section id="view-songs" class="view"><div class="section-head page-head"><div><h2>Canciones</h2><p id="songsCount"></p></div></div><div id="songsList" class="track-list"></div><div id="songsLoadMoreWrap" class="load-more-wrap"></div></section>
+    <section id="view-albums" class="view"><div class="section-head page-head"><div><h2>Álbumes</h2><p id="albumsCount"></p></div></div><div id="albumsGrid" class="card-grid"></div></section>
+    <section id="view-artists" class="view"><div class="section-head page-head"><div><h2>Artistas</h2><p>New BenifaClika</p></div></div><div id="artistsGrid" class="card-grid artist-grid"></div></section>
+    <section id="view-albumDetail" class="view"><div id="albumDetail"></div></section>
+    <section id="view-artistDetail" class="view"><div id="artistDetail"></div></section>
+    <section id="view-search" class="view">
+      <div class="search-page-head"><div><button class="page-back" onclick="NBCBack()">← Volver</button><h2>Buscar</h2><p id="searchSummary"></p></div><div id="searchFilters" class="filter-chips"><button class="chip active" data-filter="all">Todo</button><button class="chip" data-filter="tracks">Canciones</button><button class="chip" data-filter="albums">Álbumes</button><button class="chip" data-filter="artists">Artistas</button></div></div>
+      <div id="searchResults"></div>
+    </section>
+  </main>
+</div>
+
+<nav class="mobile-nav">
+  <button class="active" data-nav="home"><span>⌂</span><small>Inicio</small></button>
+  <button data-nav="songs"><span>♫</span><small>Canciones</small></button>
+  <button data-nav="albums"><span>▣</span><small>Álbumes</small></button>
+  <button data-nav="artists"><span>◎</span><small>Artistas</small></button>
+  <button id="mobileEditBtn"><span>✎</span><small>Editar</small></button>
+</nav>
+
+<div id="player" class="player">
+  <button class="now-mini" id="openNowPlayingBtn">
+    <div id="playerCover" class="player-cover">NBC</div>
+    <div class="player-meta"><strong id="playerTitle">Selecciona una canción</strong><span id="playerArtist">New BenifaClika</span><small id="playerContext">RADIO DE LA CLIKA</small></div>
+  </button>
+  <div class="player-center">
+    <div class="transport">
+      <button id="shuffleBtn" class="mode-btn" aria-pressed="false" title="Aleatorio"><span>⤨</span><small>OFF</small></button>
+      <button id="prevBtn" class="icon-btn" title="Anterior">⏮</button>
+      <button id="playBtn" class="play-btn" title="Reproducir"><span class="play-icon">▶</span></button>
+      <button id="nextBtn" class="icon-btn" title="Siguiente">⏭</button>
+      <button id="repeatBtn" class="mode-btn" aria-pressed="false" title="Bucle"><span>↻</span><small>OFF</small></button>
+    </div>
+    <div class="timeline"><span id="currentTime">0:00</span><input id="progress" type="range" min="0" max="100" step="0.1" value="0"><span id="duration">0:00</span></div>
+  </div>
+  <div class="player-extra"><button id="muteBtn" class="icon-btn" title="Silenciar">🔊</button><input id="volume" type="range" min="0" max="1" step="0.01" value="1"></div>
+</div>
+
+<div id="nowPlayingSheet" class="sheet-backdrop">
+  <section class="now-sheet">
+    <header class="now-sheet-header"><button data-sheet-close="nowPlayingSheet" class="sheet-close now-dismiss" aria-label="Cerrar Ahora suena"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></button><strong>Ahora suena</strong><span></span></header>
+    <div id="nowLargeCover" class="now-large-cover">NBC</div>
+    <div class="now-large-meta"><h2 id="nowLargeTitle">Selecciona una canción</h2><p id="nowLargeArtist">New BenifaClika</p><small id="nowLargeContext">RADIO DE LA CLIKA</small></div>
+    <div class="now-progress"><input id="nowProgress" type="range" min="0" max="100" step="0.1" value="0"><div><span id="nowCurrentTime">0:00</span><span id="nowDuration">0:00</span></div></div>
+    <div class="now-controls"><button id="nowShuffleBtn" class="mode-btn"><span>⤨</span><small>OFF</small></button><button id="nowPrevBtn" class="icon-btn big">⏮</button><button id="nowPlayBtn" class="play-btn xl"><span class="play-icon">▶</span></button><button id="nowNextBtn" class="icon-btn big">⏭</button><button id="nowRepeatBtn" class="mode-btn"><span>↻</span><small>OFF</small></button></div>
+  </section>
+</div>
+
+<div id="loginModal" class="modal-backdrop"><div class="modal login-modal"><header><div><h3>Modo edición</h3><p>Acceso privado para gestionar vuestra biblioteca.</p></div><button data-modal-close="loginModal" class="x-btn">✕</button></header><form id="loginForm" class="form"><label>Contraseña<input id="loginPassword" type="password" required autocomplete="current-password"></label><div id="loginStatus" class="status"></div><footer><button type="button" data-modal-close="loginModal" class="secondary">Cancelar</button><button class="primary">Entrar</button></footer></form></div></div>
+
+<div id="editMenuModal" class="modal-backdrop"><div class="modal edit-menu-modal"><header><div><h3>Editar página</h3><p>Gestiona música, artistas y álbumes.</p></div><button data-modal-close="editMenuModal" class="x-btn">✕</button></header><div class="storage-card"><div><strong>Almacenamiento</strong><span id="storageText">Calculando…</span></div><div class="storage-bar"><i id="storageBar"></i></div><button id="recountStorageBtn" class="text-btn">Recalcular</button></div><div class="edit-menu-grid">
+  <button id="addTrackAction" class="edit-menu-item"><span class="edit-menu-icon">♫</span><span><strong>Añadir tema</strong><small>Sube un lanzamiento individual</small></span></button>
+  <button id="addAlbumAction" class="edit-menu-item"><span class="edit-menu-icon">▣</span><span><strong>Añadir álbum</strong><small>Sube varias canciones de una vez</small></span></button>
+  <button id="profilesAction" class="edit-menu-item"><span class="edit-menu-icon">◎</span><span><strong>Artistas</strong><small>Fotos y biografías</small></span></button>
+  <button id="albumManagerAction" class="edit-menu-item"><span class="edit-menu-icon">▣</span><span><strong>Editar álbumes</strong><small>Portada, orden y canciones</small></span></button>
+  <button id="logoutAction" class="edit-menu-item is-wide"><span class="edit-menu-icon">↪</span><span><strong>Salir</strong><small>Cierra el modo edición</small></span></button>
+</div></div></div>
+
+<div id="trackModal" class="modal-backdrop"><div class="modal wide editor-modal"><header><div><h3 id="trackModalTitle">Añadir tema</h3><p>La fecha será automáticamente la del día de subida.</p></div><button data-modal-close="trackModal" class="x-btn">✕</button></header><form id="trackForm" class="form"><input id="trackId" type="hidden"><label>Título<input id="trackTitle" maxlength="120" required></label><fieldset><legend>Artistas / colaboradores</legend><div id="trackArtists" class="artist-picker"></div></fieldset><div class="two-col"><label>Audio<input id="trackAudio" type="file" accept="audio/*,.mp3,.mpeg,.m4a,.wav,.ogg"></label><label id="trackCoverLabel">Portada<input id="trackCover" type="file" accept="image/*"></label></div><div id="trackStatus" class="status"></div><footer><button type="button" data-modal-close="trackModal" class="secondary">Cancelar</button><button id="saveTrackBtn" class="primary">Guardar tema</button></footer></form></div></div>
+
+<div id="albumUploadModal" class="modal-backdrop"><div class="modal xwide editor-modal"><header><div><h3>Subir álbum</h3><p>Todas las canciones compartirán la portada del álbum.</p></div><button data-modal-close="albumUploadModal" class="x-btn">✕</button></header><form id="albumUploadForm" class="form"><label>Nombre del álbum<input id="albumTitle" required maxlength="120"></label><div class="two-col"><label>Portada del álbum<input id="albumCover" type="file" accept="image/*" required></label><label>Audios del álbum<div id="albumDropzone" class="audio-dropzone" tabindex="0"><strong>♫ Arrastra aquí los MP3</strong><span>o pulsa para seleccionar varios archivos</span><small id="albumFilesSummary">Ningún audio seleccionado</small><input id="albumMultiAudio" type="file" accept="audio/*,.mp3,.mpeg,.m4a,.wav,.ogg" multiple></div></label></div><div class="builder-tools"><label>Número de canciones<input id="albumTrackCount" type="number" min="1" max="50" value="4"></label><button type="button" id="buildAlbumRows" class="secondary">Preparar pistas</button></div><div id="albumRows" class="album-builder"></div><div id="albumUploadProgress" class="upload-progress"><div><span id="albumProgressText">Preparado</span><span id="albumProgressPct">0%</span></div><i><b id="albumProgressBar"></b></i></div><div id="albumUploadStatus" class="status"></div><footer><button type="button" data-modal-close="albumUploadModal" class="secondary">Cancelar</button><button id="saveAlbumBtn" class="primary">Subir álbum</button></footer></form></div></div>
+
+<div id="albumEditModal" class="modal-backdrop"><div class="modal xwide editor-modal"><header><div><h3>Editar álbum</h3><p>Nombre, portada, orden y canciones.</p></div><button data-modal-close="albumEditModal" class="x-btn">✕</button></header><form id="albumEditForm" class="form"><label>Álbum<select id="albumEditSelect"></select></label><div id="albumEditFields"></div><div id="albumEditStatus" class="status"></div><footer><button type="button" id="deleteAlbumBtn" class="danger">Borrar álbum</button><button class="primary">Guardar cambios</button></footer></form></div></div>
+
+<div id="profileModal" class="modal-backdrop"><div class="modal profile-modal"><header><div><h3>Editar artista</h3><p>Foto y biografía.</p></div><button data-modal-close="profileModal" class="x-btn">✕</button></header><form id="profileForm" class="form"><label>Artista<select id="profileArtist"></select></label><div id="profilePreview" class="profile-preview">NBC</div><label>Foto<input id="profilePhoto" type="file" accept="image/*"></label><label>Biografía<textarea id="profileBio" rows="4" maxlength="800"></textarea></label><div id="profileStatus" class="status"></div><footer><button type="button" id="removeProfilePhotoBtn" class="secondary">Quitar foto</button><button class="primary">Guardar artista</button></footer></form></div></div>
+
+<div id="toast" class="toast"></div>
+<audio id="audio" preload="metadata" playsinline></audio>
+<script src="/app.js"></script>
+</body>
+</html>

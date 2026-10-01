@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "new-benifaclika",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/media/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "new-benifaclika-db",
+      "database_id": "PASTE_YOUR_D1_DATABASE_ID_HERE"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "new-benifaclika-media"
+    }
+  ],
+  "vars": {
+    "STORAGE_SOFT_LIMIT_BYTES": "9663676416",
+    "SESSION_DAYS": "30"
+  }
+}
