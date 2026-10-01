@@ -85,8 +85,6 @@ img{max-width:100%}
 .cover .initial{font-size:36px;font-weight:800;letter-spacing:-.06em}
 .album-fallback{font-size:34px;color:var(--muted)}
 .album-fallback-svg{width:48px;height:48px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.quick-play{position:absolute;right:12px;bottom:12px;width:46px;height:46px;border:1px solid rgba(0,0,0,.1);border-radius:50%;display:grid;place-items:center;background:var(--text);color:var(--bg);box-shadow:0 6px 18px rgba(0,0,0,.28)}
-.quick-play .ui-icon{width:19px;height:19px}
 .card-meta{display:block;width:100%;padding:14px 3px 3px;text-align:left}
 .card-meta strong,.card-meta span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card-meta strong{font-size:14px;font-weight:700;line-height:1.4;letter-spacing:-.02em}
@@ -306,7 +304,6 @@ input[type=file]::file-selector-button{margin-right:12px;padding:7px 10px;border
   .media-card{padding:0;border-radius:15px}.media-card:hover{transform:none;background:transparent;border-color:transparent}
   .cover{border-radius:13px}.card-meta{padding:12px 2px 2px}.card-meta strong{font-size:13px}.card-meta span{font-size:10px}
   .card-actions{gap:6px;margin-top:10px}.btn-sm{min-height:42px;padding:9px 6px;font-size:10px}.btn-sm .ui-icon{width:13px;height:13px}
-  .quick-play{width:43px;height:43px;right:9px;bottom:9px}
   .artist-strip{grid-auto-columns:145px;gap:19px}.artist-pill-card strong{font-size:12px}
   .artist-card,.artist-card:hover{padding:12px 9px;border-color:var(--line);background:var(--panel)}.artist-card .card-meta strong{font-size:13px}.artist-card .card-actions{flex-wrap:wrap}
   .artist-card .btn-sm{flex-basis:100%}.artist-card .btn-edit{background:transparent;border-color:var(--line)}
