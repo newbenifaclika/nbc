@@ -357,3 +357,10 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:.55;cur
 #progress::-webkit-slider-runnable-track,#nowProgress::-webkit-slider-runnable-track{background:linear-gradient(to right,var(--active) 0%,var(--active) var(--played,0%),#4c535e var(--played,0%),#4c535e 100%)}
 #progress::-moz-range-progress,#nowProgress::-moz-range-progress{height:3px;border-radius:99px;background:var(--active)}
 @media(prefers-reduced-motion:reduce){.play-btn.play-feedback,.play-btn.play-feedback .play-icon{animation:none}}
+
+/* Keep the current release identifiable and its controls in sync. */
+.media-card.is-current{border-color:#35473b}
+.media-card.playing,.media-card.playing:hover{background:#18221c;border-color:var(--active);box-shadow:0 0 0 1px #a3e7be26}
+.media-card.playing .card-meta strong{color:var(--active)}
+.media-card.playing .btn-play{background:var(--active)}
+@media(max-width:760px){.media-card.is-current{border-color:#35473b}.media-card.playing,.media-card.playing:hover{background:#18221c;border-color:var(--active)}}
