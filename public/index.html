@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#090a0d">
+  <meta name="theme-color" content="#0b0c0e">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="New BenifaClika">
   <meta name="description" content="Biblioteca musical de New BenifaClika">
   <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/icon.svg">
+  <link rel="icon" href="/icon.svg?v=2" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-180.png">
   <link rel="stylesheet" href="/app.css">
   <title>New BenifaClika</title>
 </head>
@@ -118,7 +118,7 @@
 
 <div id="trackModal" class="modal-backdrop"><div class="modal wide editor-modal"><header><div><h3 id="trackModalTitle">Añadir tema</h3><p>La fecha será automáticamente la del día de subida.</p></div><button data-modal-close="trackModal" class="x-btn" aria-label="Cerrar"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><form id="trackForm" class="form"><input id="trackId" type="hidden"><label>Título<input id="trackTitle" maxlength="120" required></label><fieldset><legend>Artistas / colaboradores</legend><div id="trackArtists" class="artist-picker"></div></fieldset><div class="two-col"><label>Audio<input id="trackAudio" type="file" accept="audio/*,.mp3,.mpeg,.m4a,.wav,.ogg"></label><label id="trackCoverLabel">Portada<input id="trackCover" type="file" accept="image/*"></label></div><div id="trackStatus" class="status"></div><footer><button type="button" data-modal-close="trackModal" class="secondary">Cancelar</button><button id="saveTrackBtn" class="primary">Guardar tema</button></footer></form></div></div>
 
-<div id="albumUploadModal" class="modal-backdrop"><div class="modal xwide editor-modal"><header><div><h3>Subir álbum</h3><p>Todas las canciones compartirán la portada del álbum.</p></div><button data-modal-close="albumUploadModal" class="x-btn" aria-label="Cerrar"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><form id="albumUploadForm" class="form"><label>Nombre del álbum<input id="albumTitle" required maxlength="120"></label><div class="two-col"><label>Portada del álbum<input id="albumCover" type="file" accept="image/*" required></label><label>Audios del álbum<div id="albumDropzone" class="audio-dropzone" tabindex="0"><strong><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M5 16v3h14v-3"/></svg><span>Arrastra aquí los MP3</span></strong><span>o pulsa para seleccionar varios archivos</span><small id="albumFilesSummary">Ningún audio seleccionado</small><input id="albumMultiAudio" type="file" accept="audio/*,.mp3,.mpeg,.m4a,.wav,.ogg" multiple></div></label></div><div class="builder-tools"><label>Número de canciones<input id="albumTrackCount" type="number" min="1" max="50" value="4"></label><button type="button" id="buildAlbumRows" class="secondary">Preparar pistas</button></div><div id="albumRows" class="album-builder"></div><div id="albumUploadProgress" class="upload-progress"><div><span id="albumProgressText">Preparado</span><span id="albumProgressPct">0%</span></div><i><b id="albumProgressBar"></b></i></div><div id="albumUploadStatus" class="status"></div><footer><button type="button" data-modal-close="albumUploadModal" class="secondary">Cancelar</button><button id="saveAlbumBtn" class="primary">Subir álbum</button></footer></form></div></div>
+<div id="albumUploadModal" class="modal-backdrop"><div class="modal xwide editor-modal"><header><div><h3>Subir álbum</h3><p>Todas las canciones compartirán la portada del álbum.</p></div><button data-modal-close="albumUploadModal" class="x-btn" aria-label="Cerrar"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><form id="albumUploadForm" class="form"><div class="draft-note"><p id="albumDraftNotice" role="status" aria-live="polite">Preparando borrador…</p><button id="discardAlbumDraftBtn" type="button" class="text-btn">Descartar borrador</button></div><label>Nombre del álbum<input id="albumTitle" required maxlength="120"></label><div class="two-col"><label>Portada del álbum<input id="albumCover" type="file" accept="image/*"><small id="albumCoverSummary">Selecciona una portada</small></label><label>Audios del álbum<div id="albumDropzone" class="audio-dropzone" tabindex="0"><strong><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M5 16v3h14v-3"/></svg><span>Arrastra aquí los MP3</span></strong><span>o pulsa para seleccionar varios archivos</span><small id="albumFilesSummary">Ningún audio seleccionado</small><input id="albumMultiAudio" type="file" accept="audio/*,.mp3,.mpeg,.m4a,.wav,.ogg" multiple></div></label></div><div class="builder-tools"><label>Número de canciones<input id="albumTrackCount" type="number" min="1" max="50" value="4"></label><button type="button" id="buildAlbumRows" class="secondary">Preparar pistas</button></div><div id="albumRows" class="album-builder"></div><div id="albumUploadProgress" class="upload-progress" role="status" aria-live="polite"><div><span id="albumProgressText">Preparado</span><span id="albumProgressPct">0%</span></div><i><b id="albumProgressBar"></b></i></div><div id="albumUploadStatus" class="status"></div><footer><button type="button" data-modal-close="albumUploadModal" class="secondary">Cerrar y continuar después</button><button id="saveAlbumBtn" class="primary">Subir álbum</button></footer></form></div></div>
 
 <div id="albumEditModal" class="modal-backdrop"><div class="modal xwide editor-modal"><header><div><h3>Editar álbum</h3><p>Nombre, portada, orden y canciones.</p></div><button data-modal-close="albumEditModal" class="x-btn" aria-label="Cerrar"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><form id="albumEditForm" class="form"><label>Álbum<select id="albumEditSelect"></select></label><div id="albumEditFields"></div><div id="albumEditStatus" class="status"></div><footer><button type="button" id="deleteAlbumBtn" class="danger">Borrar álbum</button><button class="primary">Guardar cambios</button></footer></form></div></div>
 
@@ -126,6 +126,7 @@
 
 <div id="toast" class="toast"></div>
 <audio id="audio" preload="metadata" playsinline></audio>
+<script src="/album-draft.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

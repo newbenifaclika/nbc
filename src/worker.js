@@ -178,6 +178,22 @@ async function uploadFile(request, env, url) {
   if (kind === 'audio' && !contentType.startsWith('audio/')) return json({ error: 'El archivo no parece ser audio.' }, 415);
   if (kind !== 'audio' && !contentType.startsWith('image/')) return json({ error: 'El archivo no parece ser una imagen.' }, 415);
 
+  const original = sanitizeFilename(url.searchParams.get('name') || 'file');
+  const ext = extensionFromName(original, contentType);
+  const prefix = kind === 'audio' ? 'audio' : kind === 'artist' ? 'artists' : 'covers';
+  const uploadId = url.searchParams.get('upload_id');
+  if (uploadId && !isUuid(uploadId)) return json({ error: 'Identificador de subida no válido.' }, 400);
+  const key = `${prefix}/${uploadId || crypto.randomUUID()}${ext}`;
+  if (uploadId) {
+    const existing = await env.MEDIA.head(key);
+    if (existing) {
+      if (existing.size !== fileSize || existing.customMetadata?.originalName !== original) {
+        return json({ error: 'Este identificador pertenece a otro archivo.' }, 409);
+      }
+      return json({ key, size: existing.size, url: `/media/${encodeKey(key)}`, reused: true });
+    }
+  }
+
   const used = await getStorageBytes(env);
   const limit = getStorageLimit(env);
   if (used + fileSize > limit) {
@@ -188,11 +204,6 @@ async function uploadFile(request, env, url) {
       limit_bytes: limit,
     }, 507);
   }
-
-  const original = sanitizeFilename(url.searchParams.get('name') || 'file');
-  const ext = extensionFromName(original, contentType);
-  const prefix = kind === 'audio' ? 'audio' : kind === 'artist' ? 'artists' : 'covers';
-  const key = `${prefix}/${crypto.randomUUID()}${ext}`;
 
   const object = await env.MEDIA.put(key, request.body, {
     httpMetadata: {
@@ -320,7 +331,12 @@ async function createAlbum(request, env) {
   if (!title || !coverKey || !list.length) return json({ error: 'El álbum necesita nombre, portada y canciones.' }, 400);
   if (list.length > 50) return json({ error: 'Máximo 50 canciones por álbum.' }, 400);
 
-  const id = crypto.randomUUID();
+  if (body.upload_id && !isUuid(body.upload_id)) return json({ error: 'Identificador de álbum no válido.' }, 400);
+  const id = body.upload_id || crypto.randomUUID();
+  if (body.upload_id) {
+    const previous = await existingAlbumResult(env, id, coverKey, list);
+    if (previous) return previous;
+  }
   const statements = [env.DB.prepare(`INSERT INTO albums(id,title,cover_key) VALUES(?,?,?)`).bind(id, title, coverKey)];
   const created = [];
   for (let i = 0; i < list.length; i++) {
@@ -335,8 +351,30 @@ async function createAlbum(request, env) {
       .bind(tid, trackTitle, id, i + 1, cleanDuration(item.duration_seconds), audioKey));
     statements.push(...artistInsertStatements(env, tid, artists));
   }
-  await env.DB.batch(statements);
+  try {
+    await env.DB.batch(statements);
+  } catch (error) {
+    // A concurrent retry may have completed the same atomic D1 batch.
+    if (body.upload_id) {
+      const previous = await existingAlbumResult(env, id, coverKey, list);
+      if (previous) return previous;
+    }
+    throw error;
+  }
   return json({ ok: true, id, track_ids: created }, 201);
+}
+
+async function existingAlbumResult(env, id, coverKey, list) {
+  const album = await env.DB.prepare('SELECT id,cover_key FROM albums WHERE id=?').bind(id).first();
+  if (!album) return null;
+  const saved = (await env.DB.prepare('SELECT id,audio_key FROM tracks WHERE album_id=? ORDER BY track_number').bind(id).all()).results || [];
+  if (album.cover_key !== coverKey || saved.length !== list.length || saved.some((track,i)=>track.audio_key !== list[i].audio_key)) {
+    return json({ error: 'Este álbum ya se guardó. Actualiza la biblioteca para editarlo.' }, 409);
+  }
+  return json({ ok: true, id, track_ids: saved.map(track=>track.id), reused: true });
+}
+function isUuid(value) {
+  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 async function updateAlbum(request, env, id) {

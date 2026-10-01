@@ -342,3 +342,12 @@ input[type=file]::file-selector-button{margin-right:12px;padding:7px 10px;border
   .artist-card .card-meta span{font-size:9px}.card-grid,#homeReleases,.artist-grid{gap:10px}.now-sheet{padding-left:17px;padding-right:17px}.now-controls{gap:5px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Upload recovery and clear saving feedback. */
+.draft-note{padding:15px 17px;border:1px solid #35473b;background:#18221c;border-radius:13px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.draft-note p{margin:0;color:var(--active);font-size:12px;line-height:1.6}
+.draft-note .text-btn{flex-shrink:0;padding:10px 0;color:var(--muted)}
+.form[aria-busy="true"]{cursor:progress}
+button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:.55;cursor:wait}
+#albumCoverSummary{display:block;color:var(--muted);font-size:12px;margin-top:8px;overflow-wrap:anywhere}
+@media(max-width:760px){.draft-note{align-items:flex-start;flex-direction:column;gap:4px}#albumUploadForm footer{flex-wrap:wrap}#albumUploadForm footer button{flex:1}}
