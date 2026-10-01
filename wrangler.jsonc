@@ -14,7 +14,7 @@
     {
       "binding": "DB",
       "database_name": "new-benifaclika-db",
-      "database_id": "5641fe06-b900-495c-9726-f2fb5f479fc1"
+      "database_id": "PASTE_YOUR_D1_DATABASE_ID_HERE"
     }
   ],
   "r2_buckets": [
