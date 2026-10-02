@@ -1,4 +1,4 @@
-const CACHE='nbc-cloudflare-v13';
+const CACHE='nbc-cloudflare-v14';
 const SHELL=['/','/index.html','/app.css','/app.js','/manifest.webmanifest','/icon.svg','/album-draft.js','/playback-tools.js','/icons/app-192.png','/icons/app-512.png','/icons/apple-touch-180.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

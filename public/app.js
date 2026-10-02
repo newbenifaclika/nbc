@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);const q=(s,r=document)=>r.querySelector(s);const $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const MEMBERS=['Neggoneko','erizo eskizo','xAMMO','TGT','Perrancos'];
+const MEMBERS=['Neggoneko','erizo eskizo','xAMMO','TGT','Perrancos','Dasito'];
 const audio=$('audio');const queueTools=window.NBCPlaybackTools;
 const QUEUE_ICON='<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>';
 const QUEUE_ADD_ICON='<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 12h8M4 18h8M18 11v10M13 16h10"/></svg>';

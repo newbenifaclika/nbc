@@ -54,7 +54,8 @@ INSERT OR IGNORE INTO artists(name, sort_order) VALUES
   ('erizo eskizo', 2),
   ('xAMMO', 3),
   ('TGT', 4),
-  ('Perrancos', 5);
+  ('Perrancos', 5),
+  ('Dasito', 6);
 
 INSERT OR IGNORE INTO app_settings(key, value) VALUES
   ('storage_bytes', '0'),

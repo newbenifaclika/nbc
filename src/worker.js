@@ -2,7 +2,18 @@ const SESSION_COOKIE = 'nbc_session';
 const DEFAULT_SESSION_DAYS = 30;
 const DEFAULT_STORAGE_SOFT_LIMIT = 9 * 1024 * 1024 * 1024; // 9 GiB guardrail
 const MAX_UPLOAD_BYTES = 95 * 1024 * 1024; // below Free plan 100 MB request body cap
-const ARTISTS = ['Neggoneko', 'erizo eskizo', 'xAMMO', 'TGT', 'Perrancos'];
+const ARTISTS = ['Neggoneko', 'erizo eskizo', 'xAMMO', 'TGT', 'Perrancos', 'Dasito'];
+const artistSeeds = new WeakMap();
+function ensureArtists(env) {
+  let ready = artistSeeds.get(env.DB);
+  if (!ready) {
+    ready = env.DB.batch(ARTISTS.map((name, index) =>
+      env.DB.prepare('INSERT OR IGNORE INTO artists(name, sort_order) VALUES(?,?)').bind(name, index + 1)
+    )).catch(error => { artistSeeds.delete(env.DB); throw error; });
+    artistSeeds.set(env.DB, ready);
+  }
+  return ready;
+}
 
 export default {
   async fetch(request, env) {
@@ -34,6 +45,7 @@ async function handleApi(request, env, url) {
 
   const authenticated = await isAuthenticated(request, env);
   if (!authenticated) return json({ error: 'Inicia sesión para editar.' }, 401);
+  await ensureArtists(env);
 
   if (path === '/api/storage' && method === 'GET') return storageStatus(env);
   if (path === '/api/storage/recount' && method === 'POST') return recountStorage(env);
@@ -100,6 +112,7 @@ async function isAuthenticated(request, env) {
 }
 
 async function bootstrap(env) {
+  await ensureArtists(env);
   const [trackResult, albumResult, artistResult] = await Promise.all([
     env.DB.prepare(`
       SELECT t.id, t.title, t.album_id, t.track_number, t.duration_seconds,
