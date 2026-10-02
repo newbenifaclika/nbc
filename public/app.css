@@ -383,3 +383,25 @@ body.has-now-sheet{overflow:hidden}
 @keyframes view-enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes dialog-enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.now-sheet,.view.active,.modal-backdrop.show .modal{animation:none;transition:none}}
+
+/* Queue controls share the existing compact music controls. */
+[hidden]{display:none!important}
+.queue-add{flex:0 0 44px;color:var(--muted)}
+.card-actions .queue-add{height:auto;min-height:44px}
+.queue-add:active{color:var(--active);border-color:var(--active)}
+#nowQueueBtn.active{color:var(--active);background:#24332a}
+.now-queue-panel{padding-top:24px}
+.queue-heading h2{font-size:28px;margin:0}.queue-heading p,.queue-hint{color:var(--muted);font-size:12px;line-height:1.6}
+.queue-current{display:flex;align-items:center;gap:13px;margin:22px 0;padding:15px;border:1px solid #35473b;background:#18221c;border-radius:15px}
+.queue-current>div{min-width:0}.queue-current strong,.queue-current span,.queue-current small{display:block}
+.queue-current small{color:var(--active);font-size:10px;margin-bottom:5px}.queue-current strong{font-size:14px}.queue-current span{font-size:11px;color:var(--muted);margin-top:4px}
+.queue-thumb{flex:0 0 44px;width:44px;height:44px;border-radius:9px;background-color:var(--panel3);background-position:center;background-size:cover;display:grid;place-items:center;font-size:11px}
+.now-queue-panel h3{font-size:13px;margin:25px 0 10px}.queue-list{list-style:none;margin:0;padding:0}
+.queue-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.queue-song{display:flex;align-items:center;gap:12px;text-align:left;min-width:0;flex:1;min-height:48px}
+.queue-song>span:last-child{min-width:0}.queue-song strong,.queue-song small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.queue-song strong{font-size:13px}.queue-song small{font-size:11px;color:var(--muted);margin-top:5px}.queue-song em{display:block;font-size:9px;font-style:normal;color:var(--active);margin-top:5px}
+.queue-row .circle-btn{flex:0 0 40px;width:40px;height:40px}.queue-empty{padding:25px 0;color:var(--muted);font-size:13px}.queue-hint{margin-top:22px}
+#queueMore{margin-top:16px;width:100%}
+.queue-current strong,.queue-current span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:760px){.row-actions .queue-add{width:40px;flex-basis:40px}.card-actions .queue-add{flex-basis:40px;width:40px}.now-queue-panel{padding-top:20px}}
