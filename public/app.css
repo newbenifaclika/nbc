@@ -300,10 +300,10 @@ input[type=file]::file-selector-button{margin-right:12px;padding:7px 10px;border
   .anniversary-banner{padding:17px}.anniversary-banner>strong{font-size:12px}.anniversary-top small{font-size:10px}
   .content-section{margin-top:29px}.section-head{margin-bottom:16px}.section-head h2{font-size:20px}.section-head p{font-size:11px}
   .page-head{padding-top:0;padding-bottom:20px}.page-head h2{font-size:29px}
-  #homeReleases,.card-grid,.artist-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
-  .media-card{padding:0;border-radius:15px}.media-card:hover{transform:none;background:transparent;border-color:transparent}
+  #homeReleases,.card-grid,.artist-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .media-card{padding:8px;border-radius:18px}.media-card:hover{transform:none;background:transparent;border-color:transparent}
   .cover{border-radius:13px}.card-meta{padding:12px 2px 2px}.card-meta strong{font-size:13px}.card-meta span{font-size:10px}
-  .card-actions{gap:6px;margin-top:10px}.btn-sm{min-height:42px;padding:9px 6px;font-size:10px}.btn-sm .ui-icon{width:13px;height:13px}
+  .card-actions{gap:6px;margin-top:12px}.btn-sm{min-height:44px;padding:10px 6px;font-size:11px}.btn-sm .ui-icon{width:13px;height:13px}
   .artist-strip{grid-auto-columns:145px;gap:19px}.artist-pill-card strong{font-size:12px}
   .artist-card,.artist-card:hover{padding:12px 9px;border-color:var(--line);background:var(--panel)}.artist-card .card-meta strong{font-size:13px}.artist-card .card-actions{flex-wrap:wrap}
   .artist-card .btn-sm{flex-basis:100%}.artist-card .btn-edit{background:transparent;border-color:var(--line)}
@@ -364,3 +364,6 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:.55;cur
 .media-card.playing .card-meta strong{color:var(--active)}
 .media-card.playing .btn-play{background:var(--active)}
 @media(max-width:760px){.media-card.is-current{border-color:#35473b}.media-card.playing,.media-card.playing:hover{background:#18221c;border-color:var(--active)}}
+
+/* Clear keyboard navigation on covers and release controls. */
+.cover:focus-visible,.card-meta:focus-visible,.btn-sm:focus-visible,.primary-action:focus-visible{outline:2px solid var(--active);outline-offset:3px}
