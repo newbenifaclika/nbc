@@ -22,3 +22,28 @@ test('metadata changes immediately and stale image decoding cannot overwrite a n
  pending[1]();await new Promise(setImmediate);assert.equal(c.navigator.mediaSession.metadata.title,'B');assert.equal(c.navigator.mediaSession.metadata.artwork[0].type,'image/png');assert.equal(c.navigator.mediaSession.metadata.artwork[0].sizes,'512x512');assert.deepEqual(JSON.parse(JSON.stringify(sizes)),[[512,512]]);
 });
 test('Play starts the first queued choice when nothing is selected',async()=>{const calls=[],c={currentTrack:null,playback:{queue:['chosen'],pos:-1},tracks:[{id:'default'}],playTrack:(id,opt)=>calls.push({id,opt}),buildQueue(){throw Error('must not rebuild')}};vm.runInNewContext(app.split('\n').find(l=>l.startsWith('async function startCurrent(')),c);await vm.runInNewContext('startCurrent()',c);assert.equal(calls[0].id,'chosen');assert.equal(calls[0].opt.queueIndex,0)});
+
+test('shuffle never places the current song next or repeats adjacent duplicates',()=>{
+ const t=tools(),q={queue:['a','a','b','b','c','c'],pos:0,manualEnd:1};t.shuffle(q,()=>0);
+ for(let i=1;i<q.queue.length;i++)assert.notEqual(q.queue[i],q.queue[i-1]);
+ assert.deepEqual([...q.queue.slice(1)].sort(),['a','b','b','c','c']);
+});
+test('random ordering preserves every occurrence whenever separation is possible',()=>{
+ const t=tools();
+ for(let a=0;a<=4;a++)for(let b=0;b<=4;b++)for(let c=0;c<=4;c++)for(const previous of [null,'a','b','c']){
+  const counts={a,b,c},ids=Object.entries(counts).flatMap(([id,count])=>Array(count).fill(id)),n=ids.length;
+  const ordered=t.randomSequence(ids,previous,()=>0);let last=previous;
+  for(const id of ordered){assert.notEqual(id,last);last=id}
+  const possible=Object.entries(counts).every(([id,count])=>count<=n-count+(id===previous?0:1));
+  if(possible)assert.deepEqual([...ordered].sort(),[...ids].sort());
+ }
+});
+test('unavoidable duplicate-only runs are not played back to back in random mode',()=>{
+ const t=tools();assert.deepEqual([...t.randomSequence(['a','a','a'],'a',()=>0)],[]);
+ assert.deepEqual([...t.randomSequence(['a','a','a'],null,()=>0)],['a']);
+});
+test('next skips newly added duplicates of the current track in random mode',()=>{
+ const played=[],c={audio:{loop:false},playback:{queue:['a','a','a','b'],pos:0,shuffle:true,repeat:false},currentTrack:{id:'a'},ensureQueue(){},appendRadio(){},playTrack:(id,opt)=>played.push({id,index:opt.queueIndex}),setPlayState(){}};
+ vm.runInNewContext(app.split('\n').find(l=>l.startsWith('function nextTrack('))+';nextTrack()',c);
+ assert.deepEqual(played,[{id:'b',index:3}]);
+});
