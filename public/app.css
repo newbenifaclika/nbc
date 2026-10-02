@@ -183,7 +183,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border:0;border-radiu
 .sheet-backdrop,.modal-backdrop{display:none;position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.78)}
 .sheet-backdrop.show,.modal-backdrop.show{display:flex}
 .sheet-backdrop{align-items:flex-end;justify-content:center}
-.now-sheet{width:min(590px,100%);max-height:96dvh;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:24px 32px 36px;border:1px solid var(--line2);border-bottom:0;border-radius:26px 26px 0 0;background:#15171b;animation:sheetIn .18s ease-out}
+.now-sheet{width:min(590px,100%);max-height:96dvh;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:24px 32px 36px;border:1px solid var(--line2);border-bottom:0;border-radius:26px 26px 0 0;background:#15171b;transform:translateY(var(--sheet-drag,0px));transition:transform .22s cubic-bezier(.2,.8,.3,1)}
 .now-sheet-header{display:grid;grid-template-columns:44px 1fr 44px;align-items:center}
 .now-sheet-header strong{text-align:center;font-size:12px;font-weight:650;letter-spacing:.02em}
 .sheet-close{width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line);border-radius:13px;background:var(--panel2)}
@@ -367,3 +367,19 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:.55;cur
 
 /* Clear keyboard navigation on covers and release controls. */
 .cover:focus-visible,.card-meta:focus-visible,.btn-sm:focus-visible,.primary-action:focus-visible{outline:2px solid var(--active);outline-offset:3px}
+
+/* Lightweight sheet gestures and short entrance transitions. */
+body.has-now-sheet{overflow:hidden}
+.now-sheet-header,.now-large-cover,.now-large-meta{touch-action:pan-x}
+.now-sheet.can-scroll .now-large-cover,.now-sheet.can-scroll .now-large-meta{touch-action:pan-y}
+.sheet-backdrop.opening .now-sheet{animation:now-sheet-in .26s cubic-bezier(.2,.8,.3,1)}
+.now-sheet.dragging{animation:none;transition:none;user-select:none;will-change:transform}
+.sheet-backdrop.closing .now-sheet{animation:none;transform:translateY(100%);pointer-events:none}
+.now-sheet-header:before{content:"";position:absolute;top:8px;left:calc(50% - 18px);width:36px;height:4px;border-radius:99px;background:#515963}
+.now-sheet{position:relative}
+.view.active{animation:view-enter .16s ease-out}
+.modal-backdrop.show .modal{animation:dialog-enter .18s ease-out}
+@keyframes now-sheet-in{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes view-enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dialog-enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.now-sheet,.view.active,.modal-backdrop.show .modal{animation:none;transition:none}}
