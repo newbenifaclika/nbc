@@ -370,8 +370,8 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:.55;cur
 
 /* Lightweight sheet gestures and short entrance transitions. */
 body.has-now-sheet{overflow:hidden}
-.now-sheet-header,.now-large-cover,.now-large-meta{touch-action:pan-x}
-.now-sheet.can-scroll .now-large-cover,.now-sheet.can-scroll .now-large-meta{touch-action:pan-y}
+.now-sheet{touch-action:pan-y pinch-zoom}
+.now-sheet-header,.now-large-cover,.now-large-meta{user-select:none;-webkit-user-select:none}
 .sheet-backdrop.opening .now-sheet{animation:now-sheet-in .26s cubic-bezier(.2,.8,.3,1)}
 .now-sheet.dragging{animation:none;transition:none;user-select:none;will-change:transform}
 .sheet-backdrop.closing .now-sheet{animation:none;transform:translateY(100%);pointer-events:none}
