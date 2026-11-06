@@ -2,26 +2,88 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../src/worker.js';
 import {webcrypto} from 'node:crypto';
+import {testEnvironment,sqliteAvailable} from './test-d1.mjs';
 globalThis.crypto ||= webcrypto;
-function environment(){
- const artists=new Map([['Neggoneko',{name:'Neggoneko',sort_order:1,bio:'Existing biography',photo_key:'artists/existing.webp'}]]);let seeds=0;
- const DB={prepare(sql){return{sql,values:[],bind(...v){this.values=v;return this},async all(){return{results:sql.includes('FROM artists')?[...artists.values()]:[]}},async first(){return sql.includes('FROM artists')?artists.get(this.values[0])||null:null},async run(){if(sql.startsWith('UPDATE artists')){const a=artists.get(this.values[2]);a.photo_key=this.values[0];a.bio=this.values[1]}return{success:true}}}},async batch(statements){seeds++;for(const s of statements)if(s.sql.startsWith('INSERT OR IGNORE INTO artists')&&!artists.has(s.values[0]))artists.set(s.values[0],{name:s.values[0],sort_order:s.values[1],bio:null,photo_key:null});return[]}};
- return{DB,ADMIN_PASSWORD:'test-password',SESSION_SECRET:'test-secret',state:{artists,get seeds(){return seeds}}};
+const options={skip:!sqliteAvailable};
+async function editor(env){
+ const r=await worker.fetch(new Request('https://nbc.test/api/auth/login',{method:'POST',body:JSON.stringify({password:'test-password'})}),env);
+ return r.headers.get('set-cookie').split(';')[0];
 }
-test('bootstrap creates Dasito once and preserves existing profiles',async()=>{
- const env=environment(),request=()=>new Request('https://nbc.test/api/bootstrap');
- const first=await worker.fetch(request(),env);assert.equal(first.status,200);const data=await first.json();
- assert.equal(data.artists.find(a=>a.name==='Dasito').sort_order,6);assert.equal(env.state.artists.size,6);
- assert.equal(env.state.artists.get('Neggoneko').bio,'Existing biography');assert.equal(env.state.artists.get('Neggoneko').photo_key,'artists/existing.webp');
- await worker.fetch(request(),env);assert.equal(env.state.seeds,1);
+async function call(env,path,method='GET',body=null,cookie=''){
+ return worker.fetch(new Request('https://nbc.test'+path,{method,headers:{Cookie:cookie,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})}),env);
+}
+function track(env,id,names,album=null){
+ if(album)env.sqlite.prepare('INSERT OR IGNORE INTO albums(id,title) VALUES(?,?)').run(album,'Album');
+ env.sqlite.prepare('INSERT INTO tracks(id,title,audio_key,album_id) VALUES(?,?,?,?)').run(id,'Song '+id,'audio/'+id+'.mp3',album);
+ names.forEach((name,index)=>env.sqlite.prepare('INSERT INTO track_artists(track_id,artist_name,position) VALUES(?,?,?)').run(id,name,index));
+}
+test('catalog initializes once without changing existing profiles',options,async()=>{
+ const env=testEnvironment();env.sqlite.prepare('UPDATE artists SET bio=?,photo_key=? WHERE name=?').run('Existing biography','artists/existing.webp','Neggoneko');
+ const r=await call(env,'/api/bootstrap');assert.equal(r.status,200);
+ const data=await r.json();assert.equal(data.artists.length,6);assert.equal(data.artists.find(a=>a.name==='Dasito').sort_order,6);
+ assert.equal(data.artists.find(a=>a.name==='Neggoneko').bio,'Existing biography');
+ assert.equal(env.sqlite.prepare('SELECT value FROM app_settings WHERE key=?').get('artists_catalog_initialized').value,'1');
 });
-test('Dasito can be edited on an existing database without running SQL manually',async()=>{
- const env=environment();const login=await worker.fetch(new Request('https://nbc.test/api/auth/login',{method:'POST',body:JSON.stringify({password:'test-password'})}),env);
- const cookie=login.headers.get('set-cookie').split(';')[0];
- const result=await worker.fetch(new Request('https://nbc.test/api/artists/Dasito',{method:'PUT',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({bio:'New member',photo_key:null})}),env);
- assert.equal(result.status,200);assert.equal(env.state.artists.get('Dasito').bio,'New member');
+test('new artists are accepted in songs and album tracks',options,async()=>{
+ const env=testEnvironment(),cookie=await editor(env);
+ assert.equal((await call(env,'/api/artists','POST',{name:"D'Artista",bio:'New bio'},cookie)).status,201);
+ assert.equal((await call(env,'/api/tracks','POST',{title:'New single',artists:["D'Artista"],audio_key:'audio/new.mp3'},cookie)).status,201);
+ const album=await call(env,'/api/albums','POST',{title:'New album',cover_key:'covers/album.png',tracks:[{title:'New track',artists:["D'Artista",'Dasito'],audio_key:'audio/album.mp3'}]},cookie);
+ assert.equal(album.status,201);assert.equal((await call(env,'/api/bootstrap')).status,200);
+ assert.equal(env.sqlite.prepare('SELECT COUNT(*) AS n FROM track_artists WHERE artist_name=?').get("D'Artista").n,2);
 });
-test('public visitors cannot edit the new artist',async()=>{
- const env=environment(),result=await worker.fetch(new Request('https://nbc.test/api/artists/Dasito',{method:'PUT',body:JSON.stringify({bio:'No'})}),env);
- assert.equal(result.status,401);assert.equal(env.state.seeds,0);
+test('renaming preserves profile data and updates single and album collaborations atomically',options,async()=>{
+ const env=testEnvironment(),cookie=await editor(env);track(env,'single',['Dasito','xAMMO']);track(env,'album',['Dasito'],'album');
+ env.sqlite.prepare('UPDATE artists SET bio=?,photo_key=? WHERE name=?').run('Preserved bio','artists/existing.webp','Dasito');
+ const before=env.sqlite.prepare('SELECT * FROM tracks ORDER BY id').all();
+ const r=await call(env,'/api/artists/Dasito','PUT',{name:'Dasito Nuevo'},cookie);assert.equal(r.status,200);
+ const data=await(await call(env,'/api/bootstrap')).json();assert.deepEqual(data.tracks.find(t=>t.id==='single').artists,['Dasito Nuevo','xAMMO']);
+ assert.deepEqual(data.tracks.find(t=>t.id==='album').artists,['Dasito Nuevo']);assert.equal(data.artists.some(a=>a.name==='Dasito'),false);
+ const profile=data.artists.find(a=>a.name==='Dasito Nuevo');assert.equal(profile.bio,'Preserved bio');assert.equal(profile.photo_key,'artists/existing.webp');assert.equal(profile.sort_order,6);
+ assert.deepEqual(env.sqlite.prepare('SELECT * FROM tracks ORDER BY id').all(),before);
+ assert.deepEqual(env.sqlite.prepare('PRAGMA foreign_key_check').all(),[]);
+});
+test('renamed and deleted initial members do not reappear after a cold start',options,async()=>{
+ const env=testEnvironment(),cookie=await editor(env);
+ await call(env,'/api/artists/Dasito','PUT',{name:'New Name'},cookie);
+ assert.equal((await call(env,'/api/artists/TGT','DELETE',{},cookie)).status,200);
+ const fresh=testEnvironment(env.sqlite),r=await call(fresh,'/api/bootstrap'),data=await r.json();
+ assert.equal(data.artists.some(a=>a.name==='Dasito'||a.name==='TGT'),false);assert.equal(data.artists.some(a=>a.name==='New Name'),true);
+});
+test('duplicate names and malformed names leave profiles and song credits unchanged',options,async()=>{
+ const env=testEnvironment(),cookie=await editor(env);track(env,'song',['Dasito']);const before=env.sqlite.prepare('SELECT * FROM track_artists').all();
+ for(const name of ['xammo','', 'x'.repeat(81),'\u0000test']){
+  const r=await call(env,'/api/artists/Dasito','PUT',{name},cookie);assert.ok([400,409].includes(r.status));assert.deepEqual(env.sqlite.prepare('SELECT * FROM track_artists').all(),before);
+ }
+});
+test('removing an artist with songs requires reassignment and preserves music and collaborators',options,async()=>{
+ const env=testEnvironment(),cookie=await editor(env);track(env,'solo',['Dasito']);track(env,'collab',['Dasito','xAMMO'],'album');track(env,'other',['Dasito','TGT']);
+ const before=env.sqlite.prepare('SELECT * FROM tracks ORDER BY id').all();
+ assert.equal((await call(env,'/api/artists/Dasito','DELETE',{},cookie)).status,409);
+ const result=await call(env,'/api/artists/Dasito','DELETE',{replacement:'xAMMO'},cookie);assert.equal(result.status,200);
+ const data=await(await call(env,'/api/bootstrap')).json();assert.deepEqual(data.tracks.find(t=>t.id==='solo').artists,['xAMMO']);
+ assert.deepEqual(data.tracks.find(t=>t.id==='collab').artists,['xAMMO']);assert.deepEqual(data.tracks.find(t=>t.id==='other').artists,['xAMMO','TGT']);
+ assert.deepEqual(env.sqlite.prepare('SELECT * FROM tracks ORDER BY id').all(),before);assert.deepEqual(env.sqlite.prepare('PRAGMA foreign_key_check').all(),[]);
+});
+test('the final artist and unauthorized edits are protected',options,async()=>{
+ const env=testEnvironment(),cookie=await editor(env);
+ assert.equal((await call(env,'/api/artists','POST',{name:'Unauthorized'})).status,401);
+ assert.equal((await call(env,'/api/artists/Dasito','PUT',{name:'Unauthorized'})).status,401);
+ assert.equal((await call(env,'/api/artists/Dasito','DELETE',{})).status,401);
+ await call(env,'/api/bootstrap');env.sqlite.prepare('DELETE FROM artists WHERE name<>?').run('Dasito');
+ assert.equal((await call(env,'/api/artists/Dasito','DELETE',{},cookie)).status,409);
+});
+test('editing a song rejects removed artist names instead of losing a collaborator silently',options,async()=>{
+ const env=testEnvironment(),cookie=await editor(env);track(env,'song',['Dasito','xAMMO']);
+ await call(env,'/api/artists/Dasito','PUT',{name:'New Name'},cookie);
+ const r=await call(env,'/api/tracks/song','PUT',{title:'New title',artists:['Dasito','xAMMO']},cookie);assert.equal(r.status,400);
+ assert.equal(env.sqlite.prepare('SELECT title FROM tracks WHERE id=?').get('song').title,'Song song');
+});
+
+test('adopting an existing customized catalog never restores removed default names',options,async()=>{
+ const env=testEnvironment();env.sqlite.prepare('UPDATE artists SET name=? WHERE name=?').run('Customized name','Dasito');
+ env.sqlite.prepare('DELETE FROM artists WHERE name=?').run('TGT');
+ const data=await(await call(env,'/api/bootstrap')).json();
+ assert.equal(data.artists.some(a=>a.name==='Dasito'||a.name==='TGT'),false);
+ assert.equal(data.artists.some(a=>a.name==='Customized name'),true);
 });

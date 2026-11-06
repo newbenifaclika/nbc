@@ -49,13 +49,15 @@ CREATE INDEX IF NOT EXISTS idx_tracks_created_at ON tracks(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_track_artists_artist ON track_artists(artist_name);
 CREATE INDEX IF NOT EXISTS idx_track_artists_track ON track_artists(track_id);
 
-INSERT OR IGNORE INTO artists(name, sort_order) VALUES
-  ('Neggoneko', 1),
-  ('erizo eskizo', 2),
-  ('xAMMO', 3),
-  ('TGT', 4),
-  ('Perrancos', 5),
-  ('Dasito', 6);
+INSERT OR IGNORE INTO artists(name, sort_order)
+SELECT name, sort_order FROM (
+  SELECT 'Neggoneko' AS name, 1 AS sort_order
+  UNION ALL SELECT 'erizo eskizo', 2
+  UNION ALL SELECT 'xAMMO', 3
+  UNION ALL SELECT 'TGT', 4
+  UNION ALL SELECT 'Perrancos', 5
+  UNION ALL SELECT 'Dasito', 6
+) WHERE NOT EXISTS (SELECT 1 FROM app_settings WHERE key='artists_catalog_initialized');
 
 INSERT OR IGNORE INTO app_settings(key, value) VALUES
   ('storage_bytes', '0'),

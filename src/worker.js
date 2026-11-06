@@ -2,17 +2,44 @@ const SESSION_COOKIE = 'nbc_session';
 const DEFAULT_SESSION_DAYS = 30;
 const DEFAULT_STORAGE_SOFT_LIMIT = 9 * 1024 * 1024 * 1024; // 9 GiB guardrail
 const MAX_UPLOAD_BYTES = 95 * 1024 * 1024; // below Free plan 100 MB request body cap
-const ARTISTS = ['Neggoneko', 'erizo eskizo', 'xAMMO', 'TGT', 'Perrancos', 'Dasito'];
+const INITIAL_ARTISTS = ['Neggoneko', 'erizo eskizo', 'xAMMO', 'TGT', 'Perrancos', 'Dasito'];
+const ARTIST_CATALOG_KEY = 'artists_catalog_initialized';
 const artistSeeds = new WeakMap();
 function ensureArtists(env) {
   let ready = artistSeeds.get(env.DB);
   if (!ready) {
-    ready = env.DB.batch(ARTISTS.map((name, index) =>
-      env.DB.prepare('INSERT OR IGNORE INTO artists(name, sort_order) VALUES(?,?)').bind(name, index + 1)
-    )).catch(error => { artistSeeds.delete(env.DB); throw error; });
+    ready = (async () => {
+      const initialized = await env.DB.prepare('SELECT value FROM app_settings WHERE key=?').bind(ARTIST_CATALOG_KEY).first();
+      if (initialized) return;
+      const existing = await env.DB.prepare('SELECT COUNT(*) AS count FROM artists').first();
+      // Existing catalogs are authoritative. Only seed a genuinely empty database.
+      const initial = Number(existing?.count) ? [] : INITIAL_ARTISTS;
+      // The condition is also inside each statement: concurrent isolates must never reseed a managed catalog.
+      await env.DB.batch([
+        ...initial.map((name, index) => env.DB.prepare(
+          'INSERT OR IGNORE INTO artists(name, sort_order) SELECT ?,? WHERE NOT EXISTS (SELECT 1 FROM app_settings WHERE key=?)'
+        ).bind(name, index + 1, ARTIST_CATALOG_KEY)),
+        env.DB.prepare('INSERT OR IGNORE INTO app_settings(key,value) VALUES(?,?)').bind(ARTIST_CATALOG_KEY, '1'),
+      ]);
+    })().catch(error => { artistSeeds.delete(env.DB); throw error; });
     artistSeeds.set(env.DB, ready);
   }
   return ready;
+}
+async function artistNames(env) {
+  return ((await env.DB.prepare('SELECT name FROM artists ORDER BY sort_order,name').all()).results || []).map(a => a.name);
+}
+function artistName(value) {
+  if (typeof value !== 'string') return '';
+  const name = value.trim().replace(/\s+/g, ' ');
+  return name && name.length <= 80 && !/[\u0000-\u001f\u007f]/.test(name) ? name : '';
+}
+async function artistNameTaken(env, name, exclude = null) {
+  const key = value => value.normalize('NFKC').toLocaleLowerCase('es');
+  return (await artistNames(env)).some(existing => existing !== exclude && key(existing) === key(name));
+}
+function artistConflict(error) {
+  return /unique constraint/i.test(String(error?.message || error));
 }
 
 export default {
@@ -62,8 +89,10 @@ async function handleApi(request, env, url) {
   if (albumMatch && method === 'PUT') return updateAlbum(request, env, decodeURIComponent(albumMatch[1]));
   if (albumMatch && method === 'DELETE') return deleteAlbum(env, decodeURIComponent(albumMatch[1]));
 
+  if (path === '/api/artists' && method === 'POST') return createArtist(request, env);
   const artistMatch = path.match(/^\/api\/artists\/(.+)$/);
   if (artistMatch && method === 'PUT') return updateArtist(request, env, decodeURIComponent(artistMatch[1]));
+  if (artistMatch && method === 'DELETE') return deleteArtist(request, env, decodeURIComponent(artistMatch[1]));
 
   return json({ error: 'Ruta no encontrada.' }, 404);
 }
@@ -279,9 +308,10 @@ async function handleMedia(request, env, url) {
 }
 
 async function createTrack(request, env) {
+  const allowedArtists = await artistNames(env);
   const body = await readJson(request);
   const title = cleanText(body.title, 120);
-  const artists = validateArtists(body.artists);
+  const artists = validateArtists(body.artists, allowedArtists);
   const audioKey = cleanKey(body.audio_key);
   const coverKey = body.cover_key ? cleanKey(body.cover_key) : null;
   const duration = cleanDuration(body.duration_seconds);
@@ -301,11 +331,12 @@ async function createTrack(request, env) {
 }
 
 async function updateTrack(request, env, id) {
+  const allowedArtists = await artistNames(env);
   const old = await env.DB.prepare(`SELECT * FROM tracks WHERE id=?`).bind(id).first();
   if (!old) return json({ error: 'Canción no encontrada.' }, 404);
   const body = await readJson(request);
   const title = cleanText(body.title, 120);
-  const artists = validateArtists(body.artists);
+  const artists = validateArtists(body.artists, allowedArtists);
   if (!title || !artists.length) return json({ error: 'Faltan título o artistas.' }, 400);
 
   const audioKey = body.audio_key ? cleanKey(body.audio_key) : old.audio_key;
@@ -337,6 +368,7 @@ async function deleteTrack(env, id) {
 }
 
 async function createAlbum(request, env) {
+  const allowedArtists = await artistNames(env);
   const body = await readJson(request);
   const title = cleanText(body.title, 120);
   const coverKey = body.cover_key ? cleanKey(body.cover_key) : null;
@@ -355,7 +387,7 @@ async function createAlbum(request, env) {
   for (let i = 0; i < list.length; i++) {
     const item = list[i] || {};
     const trackTitle = cleanText(item.title, 120);
-    const artists = validateArtists(item.artists);
+    const artists = validateArtists(item.artists, allowedArtists);
     const audioKey = cleanKey(item.audio_key);
     if (!trackTitle || !artists.length || !audioKey) return json({ error: `La pista ${i + 1} no está completa.` }, 400);
     const tid = crypto.randomUUID();
@@ -391,6 +423,7 @@ function isUuid(value) {
 }
 
 async function updateAlbum(request, env, id) {
+  const allowedArtists = await artistNames(env);
   const oldAlbum = await env.DB.prepare(`SELECT * FROM albums WHERE id=?`).bind(id).first();
   if (!oldAlbum) return json({ error: 'Álbum no encontrado.' }, 404);
   const oldTracks = (await env.DB.prepare(`SELECT * FROM tracks WHERE album_id=? ORDER BY track_number`).bind(id).all()).results || [];
@@ -412,7 +445,7 @@ async function updateAlbum(request, env, id) {
     const tid = String(row.id || '');
     if (!oldById.has(tid) || removeIds.has(tid)) continue;
     const trackTitle = cleanText(row.title, 120);
-    const artists = validateArtists(row.artists);
+    const artists = validateArtists(row.artists, allowedArtists);
     const number = Math.max(1, Math.min(999, Number(row.track_number) || 1));
     if (!trackTitle || !artists.length) return json({ error: 'Todas las canciones necesitan título y artista.' }, 400);
     statements.push(env.DB.prepare(`UPDATE tracks SET title=?,track_number=?,updated_at=datetime('now') WHERE id=? AND album_id=?`).bind(trackTitle, number, tid, id));
@@ -425,7 +458,7 @@ async function updateAlbum(request, env, id) {
   for (let i = 0; i < additions.length; i++) {
     const item = additions[i] || {};
     const trackTitle = cleanText(item.title, 120);
-    const artists = validateArtists(item.artists);
+    const artists = validateArtists(item.artists, allowedArtists);
     const audioKey = cleanKey(item.audio_key);
     if (!trackTitle || !artists.length || !audioKey) return json({ error: `La nueva pista ${i + 1} no está completa.` }, 400);
     const tid = crypto.randomUUID();
@@ -467,16 +500,72 @@ async function deleteAlbum(env, id) {
   return json({ ok: true });
 }
 
-async function updateArtist(request, env, name) {
-  if (!ARTISTS.includes(name)) return json({ error: 'Artista no válido.' }, 400);
-  const old = await env.DB.prepare(`SELECT * FROM artists WHERE name=?`).bind(name).first();
-  if (!old) return json({ error: 'Artista no encontrado.' }, 404);
-  const body = await readJson(request);
+async function createArtist(request, env) {
+  const body = await readJson(request), name = artistName(body.name);
+  if (!name) return json({ error: 'Escribe un nombre de artista de entre 1 y 80 caracteres.' }, 400);
+  if (await artistNameTaken(env, name)) return json({ error: 'Ya existe un artista con ese nombre.' }, 409);
   const bio = cleanText(body.bio || '', 800) || null;
+  const photoKey = body.photo_key ? cleanKey(body.photo_key) : null;
+  if (body.photo_key && !photoKey) return json({ error: 'La foto no es válida.' }, 400);
+  try {
+    await env.DB.prepare('INSERT INTO artists(name,photo_key,bio,sort_order) SELECT ?,?,?,COALESCE(MAX(sort_order),0)+1 FROM artists')
+      .bind(name, photoKey, bio).run();
+  } catch (error) {
+    if (artistConflict(error)) return json({ error: 'Ya existe un artista con ese nombre.' }, 409);
+    throw error;
+  }
+  return json({ ok: true, name }, 201);
+}
+async function updateArtist(request, env, name) {
+  const old = await env.DB.prepare('SELECT * FROM artists WHERE name=?').bind(name).first();
+  if (!old) return json({ error: 'Artista no encontrado. Actualiza la biblioteca.' }, 404);
+  const body = await readJson(request);
+  const nextName = body.name === undefined ? name : artistName(body.name);
+  if (!nextName) return json({ error: 'Escribe un nombre de artista de entre 1 y 80 caracteres.' }, 400);
+  if (nextName !== name && await artistNameTaken(env, nextName, name)) return json({ error: 'Ya existe un artista con ese nombre.' }, 409);
+  const bio = body.bio === undefined ? old.bio : cleanText(body.bio || '', 800) || null;
   const photoKey = body.photo_key === null ? null : body.photo_key ? cleanKey(body.photo_key) : old.photo_key;
-  await env.DB.prepare(`UPDATE artists SET photo_key=?,bio=?,updated_at=datetime('now') WHERE name=?`).bind(photoKey, bio, name).run();
-  if (old.photo_key && old.photo_key !== photoKey) await deleteIfUnused(env, old.photo_key);
-  return json({ ok: true });
+  if (body.photo_key && !photoKey) return json({ error: 'La foto no es válida.' }, 400);
+  try {
+    if (nextName !== name) {
+      const result = await env.DB.batch([
+        env.DB.prepare('INSERT INTO artists(name,photo_key,bio,sort_order,created_at) SELECT ?,?,?,sort_order,created_at FROM artists WHERE name=?').bind(nextName, photoKey, bio, name),
+        env.DB.prepare('UPDATE track_artists SET artist_name=? WHERE artist_name=?').bind(nextName, name),
+        env.DB.prepare('DELETE FROM artists WHERE name=?').bind(name),
+      ]);
+      if (result[0]?.meta?.changes === 0) return json({ error: 'Este artista cambió en otra sesión. Actualiza la biblioteca.' }, 409);
+    } else {
+      await env.DB.prepare("UPDATE artists SET photo_key=?,bio=?,updated_at=datetime('now') WHERE name=?").bind(photoKey, bio, name).run();
+    }
+  } catch (error) {
+    if (artistConflict(error)) return json({ error: 'Ya existe un artista con ese nombre.' }, 409);
+    throw error;
+  }
+  if (old.photo_key && old.photo_key !== photoKey) await deleteIfUnused(env, old.photo_key).catch(error => console.warn('Artist photo cleanup:', error));
+  return json({ ok: true, name: nextName, previous_name: name });
+}
+async function deleteArtist(request, env, name) {
+  const old = await env.DB.prepare('SELECT * FROM artists WHERE name=?').bind(name).first();
+  if (!old) return json({ error: 'Artista no encontrado. Actualiza la biblioteca.' }, 404);
+  const body = await readJson(request), replacement = typeof body.replacement === 'string' ? body.replacement : '';
+  const names = await artistNames(env);
+  if (names.length <= 1) return json({ error: 'La biblioteca necesita al menos un artista.' }, 409);
+  if (replacement && (replacement === name || !names.includes(replacement))) return json({ error: 'Selecciona otro artista para las canciones.' }, 400);
+  const linked = await env.DB.prepare('SELECT COUNT(*) AS count FROM track_artists WHERE artist_name=?').bind(name).first();
+  if (Number(linked?.count) && !replacement) return json({ error: 'Selecciona a quién reasignar sus canciones. La música se conservará.' }, 409);
+  const statements = [];
+  if (replacement) statements.push(env.DB.prepare('INSERT OR IGNORE INTO track_artists(track_id,artist_name,position) SELECT track_id,?,position FROM track_artists WHERE artist_name=?').bind(replacement, name));
+  statements.push(
+    env.DB.prepare('DELETE FROM track_artists WHERE artist_name=? AND ?<>\'\'').bind(name, replacement),
+    env.DB.prepare('DELETE FROM artists WHERE name=? AND (SELECT COUNT(*) FROM artists)>1').bind(name)
+  );
+  try { const result = await env.DB.batch(statements); if (result.at(-1)?.meta?.changes === 0) return json({ error: 'La biblioteca necesita al menos un artista. Actualiza la lista.' }, 409); }
+  catch (error) {
+    if (/foreign key constraint/i.test(String(error?.message || error))) return json({ error: 'El artista tiene nuevas canciones. Actualiza y selecciona un artista de destino.' }, 409);
+    throw error;
+  }
+  if (old.photo_key) await deleteIfUnused(env, old.photo_key).catch(error => console.warn('Artist photo cleanup:', error));
+  return json({ ok: true, name, replacement: replacement || null });
 }
 
 async function findDuplicate(env, title, albumId, artists, excludeId = null) {
@@ -499,10 +588,10 @@ function artistInsertStatements(env, trackId, artists) {
   return artists.map((artist, i) => env.DB.prepare(`INSERT INTO track_artists(track_id,artist_name,position) VALUES(?,?,?)`).bind(trackId, artist, i));
 }
 
-function validateArtists(value) {
+function validateArtists(value, allowedArtists) {
   if (!Array.isArray(value)) return [];
-  const unique = [...new Set(value.map(x => String(x || '').trim()).filter(x => ARTISTS.includes(x)))];
-  return unique.slice(0, ARTISTS.length);
+  const unique = [...new Set(value.map(x => String(x || '').trim()).filter(Boolean))];
+  return unique.every(name => allowedArtists.includes(name)) ? unique.slice(0, allowedArtists.length) : [];
 }
 
 async function fileIsReferenced(env, key) {

@@ -11,7 +11,7 @@ function environment(){
     if(sql.includes('FROM albums WHERE id='))return albums.get(this.values[0])||null;
     if(sql.includes('SELECT 1 AS used'))return [...albums.values()].some(a=>a.cover_key===this.values[0])?{used:1}:null;
     return null;
-  },async all(){return {results:[...tracks.values()].filter(t=>t.album_id===this.values[0]).sort((a,b)=>a.track_number-b.track_number)}},
+  },async all(){if(sql.includes('SELECT name FROM artists'))return {results:['Neggoneko','erizo eskizo','xAMMO','TGT','Perrancos','Dasito'].map(name=>({name}))};return {results:[...tracks.values()].filter(t=>t.album_id===this.values[0]).sort((a,b)=>a.track_number-b.track_number)}},
   async run(){if(sql.includes('app_settings'))bytes=Number(this.values[0]);return {success:true}},sql,values:[]}},
   async batch(statements){
     for(const s of statements)if(s.sql.startsWith('INSERT INTO albums')&&albums.has(s.values[0]))throw Error('UNIQUE constraint failed');

@@ -405,3 +405,11 @@ body.has-now-sheet{overflow:hidden}
 #queueMore{margin-top:16px;width:100%}
 .queue-current strong,.queue-current span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:760px){.row-actions .queue-add{width:40px;flex-basis:40px}.card-actions .queue-add{flex-basis:40px;width:40px}.now-queue-panel{padding-top:20px}}
+
+/* Artist catalog management. */
+.artist-manager-tools{display:flex;gap:10px;margin-bottom:22px}
+.artist-manager-tools button{flex:1;min-height:44px;padding:10px 12px;border-radius:12px;font-size:12px}
+.artist-remove-btn{border:1px solid #653b40;color:#edaaaf;background:#2b1b1f}
+.artist-name-help{display:block;margin:0;color:var(--muted);font-size:12px;line-height:1.6}
+#profileForm .artist-name-help{margin-top:-12px}
+#artistRemoveText{line-height:1.6}
