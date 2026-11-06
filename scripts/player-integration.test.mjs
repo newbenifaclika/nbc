@@ -119,3 +119,44 @@ test('the favorites play button stays hidden for guests and empty libraries',asy
   assert.equal(elements.get('playFavoritesBtn').hidden,true);
  }
 });
+
+test('both progress sliders preview a drag and seek only when it is committed',async()=>{
+ const {elements,audio,positions}=await boot();
+ const dispatch=(slider,type)=>{for(const handler of slider.events[type]||[])handler({target:slider})};
+ for(const id of ['progress','nowProgress']){
+  const slider=elements.get(id);
+  audio.duration=180;
+  audio.currentTime=12;
+  audio.emit('timeupdate');
+  slider.value='50';dispatch(slider,'input');
+  slider.value='75';dispatch(slider,'input');
+  audio.currentTime=13;
+  audio.emit('timeupdate');
+  assert.equal(audio.currentTime,13);
+  assert.equal(positions.at(-1).position,13);
+  assert.equal(elements.get('currentTime').textContent,'2:15');
+  assert.equal(elements.get('nowCurrentTime').textContent,'2:15');
+  assert.equal(slider.value,75);
+  dispatch(slider,'change');
+  assert.equal(audio.currentTime,135);
+  slider.value='20';dispatch(slider,'input');dispatch(slider,'pointercancel');dispatch(slider,'change');
+  assert.equal(audio.currentTime,135);
+  assert.equal(slider.value,75);
+ }
+});
+
+test('a slider drag from the previous song cannot seek the next song',async()=>{
+ const {elements,audio}=await boot();
+ const slider=elements.get('progress');
+ const dispatch=type=>{for(const handler of slider.events[type]||[])handler({target:slider})};
+ audio.duration=180;
+ slider.value='60';dispatch('input');
+ elements.get('nextBtn').onclick();
+ await new Promise(setImmediate);
+ audio.duration=180;
+ audio.emit('timeupdate');
+ slider.value='80';dispatch('input');dispatch('change');
+ assert.equal(audio.src,'/media/audio/two.mp3');
+ assert.equal(audio.currentTime,0);
+ assert.equal(slider.value,0);
+});
