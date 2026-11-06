@@ -589,3 +589,33 @@ input[type=range]::-webkit-slider-thumb{background:#b4d8c0}
   .footer-bottom{display:flex}.footer-social{width:100%}
 }
 @media(max-width:350px){.player .now-mini{gap:6px}.player-cover{width:34px;height:34px}.transport .icon-btn{width:26px}.player-extra .player-queue{width:34px;flex-basis:34px}}
+
+/* Listener accounts and saved songs. */
+.footer-social a{gap:7px}
+.social-logo{width:18px;height:18px;flex:0 0 auto}
+.instagram-logo{fill:none;stroke:#ef9bb7;stroke-width:1.8}.instagram-logo .social-dot{fill:#ef9bb7;stroke:none}
+.account-btn{min-height:42px;white-space:nowrap;flex-shrink:0}
+.account-btn.active{color:#c6e6cf;background:var(--green-soft);border-color:#496e55}
+.account-tabs{display:flex;gap:8px;margin-bottom:16px}
+.account-tabs .chip{flex:1;border-radius:9px}
+.account-hint{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+.account-member-actions{display:flex;flex-wrap:wrap;gap:9px}
+.account-delete{border-top:1px solid var(--line);padding-top:12px}
+.account-delete summary{cursor:pointer;font-size:13px;color:var(--muted)}
+.account-delete form{margin-top:14px}
+#listenerIssuedKey{font-family:ui-monospace,monospace;font-size:clamp(11px,3.25vw,15px);user-select:all}
+#listenerStatus:empty{display:none}
+.favorite-btn{color:#aac6b3}
+.favorite-btn:hover,.favorite-btn[aria-pressed="true"]{color:#9ed7b2}
+.favorite-btn[aria-pressed="true"] .heart-icon{fill:currentColor}
+.media-card[data-track-id]{position:relative}
+.card-favorite{position:absolute;z-index:1;right:14px;top:14px;width:40px;height:40px;display:grid;place-items:center;border-radius:10px;background:#0d1712ee;border:1px solid #536b5b}
+.card-favorite:hover,.card-favorite[aria-pressed="true"]{background:#233f2d}
+#nowFavoriteBtn{grid-column:3}
+@media(max-width:760px){
+ .top-actions .account-btn{padding:8px 9px;gap:4px}
+ .top-actions .account-btn .ui-icon{width:16px;height:16px}
+ .card-favorite{right:11px;top:11px;width:39px;height:39px}
+ .mobile-nav button small{font-size:9px}
+}
+@media(max-width:360px){.top-actions .account-btn span{display:none}.top-actions .account-btn{min-width:39px}.mobile-nav button small{font-size:8px}}

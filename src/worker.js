@@ -1,3 +1,5 @@
+import { handleListener } from './listeners.js';
+
 const SESSION_COOKIE = 'nbc_session';
 const DEFAULT_SESSION_DAYS = 30;
 const DEFAULT_STORAGE_SOFT_LIMIT = 9 * 1024 * 1024 * 1024; // 9 GiB guardrail
@@ -47,6 +49,7 @@ export default {
     const url = new URL(request.url);
     try {
       if (url.pathname.startsWith('/media/')) return handleMedia(request, env, url);
+      if (url.pathname === '/api/listener' || url.pathname.startsWith('/api/listener/')) return await handleListener(request, env, url);
       if (url.pathname.startsWith('/api/')) return handleApi(request, env, url);
       return env.ASSETS.fetch(request);
     } catch (error) {

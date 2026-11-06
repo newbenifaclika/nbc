@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="New BenifaClika">
   <meta name="description" content="Biblioteca musical de New BenifaClika">
   <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="icon" href="/icons/favicon-32.png?v=4" type="image/png" sizes="32x32">
-  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-180.png?v=4">
+  <link rel="icon" href="/icons/favicon-32.png?v=5" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-180.png?v=5">
   <link rel="stylesheet" href="/app.css">
   <title>New BenifaClika</title>
 </head>
@@ -19,7 +19,7 @@
 <div class="app-shell">
   <header class="sidebar">
     <button class="brand" data-nav="home" aria-label="Ir al inicio">
-      <img class="brand-mark" src="/icons/app-192.png?v=4" alt="" width="52" height="52">
+      <img class="brand-mark" src="/icons/app-192.png?v=5" alt="" width="52" height="52">
       <span class="brand-copy"><strong>New BenifaClika</strong><small>Biblioteca musical</small></span>
     </button>
     <nav class="side-nav" aria-label="Navegación principal">
@@ -27,6 +27,7 @@
       <button class="nav-btn" data-nav="songs"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6.2L19.5 4v11.8"/><circle cx="6.4" cy="18" r="2.6"/><circle cx="16.9" cy="15.8" r="2.6"/></svg></span><span>Canciones</span></button>
       <button class="nav-btn" data-nav="albums"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="12" cy="12" r="3.2"/><path d="M12 8.8v6.4"/></svg></span><span>Álbumes</span></button>
       <button class="nav-btn" data-nav="artists"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.2" r="3"/><path d="M3.8 19c.6-3.8 2.4-5.7 5.2-5.7s4.6 1.9 5.2 5.7"/><circle cx="17.2" cy="9.2" r="2.1"/><path d="M15.5 14.2c2.9-.4 4.5 1.2 4.9 4.3"/></svg></span><span>Artistas</span></button>
+      <button class="nav-btn" data-nav="favorites"><span class="nav-icon"><svg class="ui-icon heart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 5.5a5 5 0 0 0-7.1 0L12 7.1l-1.6-1.6a5 5 0 0 0-7.1 7.1L12 21l8.7-8.4a5 5 0 0 0 0-7.1Z"/></svg></span><span>Favoritos</span></button>
       <button class="nav-btn" id="sideEditBtn"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 16.8-.8 3 3-.8L18.6 7.6a2.2 2.2 0 0 0-3.1-3.1z"/><path d="m14.2 5.8 4 4"/></svg></span><span>Editar</span></button>
     </nav>
 
@@ -40,7 +41,7 @@
         <input id="globalSearch" aria-label="Buscar canción, artista o álbum" type="search" autocomplete="off" placeholder="Buscar música">
         <div id="searchSuggest" class="search-suggest"></div>
       </div>
-      <div class="top-actions"><button id="installBtn" class="pill install-btn"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v10"/><path d="m8.2 10.1 3.8 3.8 3.8-3.8"/><path d="M5 17.2v1.4a1.9 1.9 0 0 0 1.9 1.9h10.2a1.9 1.9 0 0 0 1.9-1.9v-1.4"/></svg><span>Instalar</span></button><button id="editBtn" class="pill"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 16.8-.8 3 3-.8L18.6 7.6a2.2 2.2 0 0 0-3.1-3.1z"/><path d="m14.2 5.8 4 4"/></svg><span id="editBtnLabel">Editar</span></button></div>
+      <div class="top-actions"><button id="listenerAccountBtn" class="pill account-btn" type="button" aria-label="Mi cuenta"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20v-1.5a6.5 6.5 0 0 1 13 0V20"/></svg><span>Cuenta</span></button><button id="installBtn" class="pill install-btn"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v10"/><path d="m8.2 10.1 3.8 3.8 3.8-3.8"/><path d="M5 17.2v1.4a1.9 1.9 0 0 0 1.9 1.9h10.2a1.9 1.9 0 0 0 1.9-1.9v-1.4"/></svg><span>Instalar</span></button><button id="editBtn" class="pill"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 16.8-.8 3 3-.8L18.6 7.6a2.2 2.2 0 0 0-3.1-3.1z"/><path d="m14.2 5.8 4 4"/></svg><span id="editBtnLabel">Editar</span></button></div>
     </header>
 
 
@@ -56,6 +57,7 @@
     </section>
 
     <section id="view-songs" class="view"><div class="section-head page-head"><div><h2>Canciones</h2><p id="songsCount"></p></div></div><div id="songsList" class="track-list"></div><div id="songsLoadMoreWrap" class="load-more-wrap"></div></section>
+    <section id="view-favorites" class="view"><div class="section-head page-head"><div><h2>Favoritos</h2><p id="favoritesCount"></p></div></div><div id="favoritesList" class="track-list"></div></section>
     <section id="view-albums" class="view"><div class="section-head page-head"><div><h2>Álbumes</h2><p id="albumsCount"></p></div></div><div id="albumsGrid" class="card-grid"></div></section>
     <section id="view-artists" class="view"><div class="section-head page-head"><div><h2>Artistas</h2><p>New BenifaClika</p></div></div><div id="artistsGrid" class="card-grid artist-grid"></div></section>
     <section id="view-albumDetail" class="view"><div id="albumDetail"></div></section>
@@ -65,7 +67,7 @@
       <div id="searchResults"></div>
     </section>
     <footer class="site-footer">
-      <div class="footer-bottom"><p>© <span id="copyrightYear">2026</span> New BenifaClika. Todos los derechos reservados.<br>La música y las imágenes pertenecen a sus respectivos autores.<br>Made by <strong>srthegato</strong></p><nav class="footer-social" aria-label="Redes sociales"><a href="https://www.youtube.com/@LANEWBENIFACLIKA" target="_blank" rel="noopener noreferrer">YouTube</a><a href="https://www.instagram.com/lanewbenifaclika?mdxt=NXR5MTlkN2Fjbmd5" target="_blank" rel="noopener noreferrer">Instagram</a></nav><details class="privacy-note"><summary>Privacidad y cookies</summary><p>El código de esta web no incorpora cookies publicitarias ni herramientas de seguimiento. El modo edición utiliza una cookie de sesión necesaria para mantener el acceso. El navegador guarda tus preferencias de reproducción, la caché de la app y los borradores de subida.</p></details></div>
+      <div class="footer-bottom"><p>© <span id="copyrightYear">2026</span> New BenifaClika. Todos los derechos reservados.<br>Made by <strong>srthegato</strong></p><nav class="footer-social" aria-label="Redes sociales"><a href="https://www.youtube.com/@LANEWBENIFACLIKA" target="_blank" rel="noopener noreferrer"><svg class="social-logo" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="5" fill="#ff3838"/><path d="m10 8 6 4-6 4z" fill="white"/></svg>YouTube</a><a href="https://www.instagram.com/lanewbenifaclika?mdxt=NXR5MTlkN2Fjbmd5" target="_blank" rel="noopener noreferrer"><svg class="social-logo instagram-logo" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.8" r="1" class="social-dot"/></svg>Instagram</a></nav><details class="privacy-note"><summary>Privacidad y cookies</summary><p>El código de esta web no incorpora cookies publicitarias ni herramientas de seguimiento. Las cuentas y el modo edición utilizan cookies de sesión para mantener el acceso. Si creas una cuenta, se guardan tu nombre de usuario y tus favoritos. El navegador guarda tus preferencias de reproducción, la caché de la app y los borradores de subida.</p></details></div>
     </footer>
   </main>
 </div>
@@ -75,6 +77,7 @@
   <button data-nav="songs"><span class="mobile-nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6.2L19.5 4v11.8"/><circle cx="6.4" cy="18" r="2.6"/><circle cx="16.9" cy="15.8" r="2.6"/></svg></span><small>Canciones</small></button>
   <button data-nav="albums"><span class="mobile-nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="12" cy="12" r="3.2"/><path d="M12 8.8v6.4"/></svg></span><small>Álbumes</small></button>
   <button data-nav="artists"><span class="mobile-nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.2" r="3"/><path d="M3.8 19c.6-3.8 2.4-5.7 5.2-5.7s4.6 1.9 5.2 5.7"/><circle cx="17.2" cy="9.2" r="2.1"/><path d="M15.5 14.2c2.9-.4 4.5 1.2 4.9 4.3"/></svg></span><small>Artistas</small></button>
+  <button data-nav="favorites"><span class="mobile-nav-icon"><svg class="ui-icon heart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 5.5a5 5 0 0 0-7.1 0L12 7.1l-1.6-1.6a5 5 0 0 0-7.1 7.1L12 21l8.7-8.4a5 5 0 0 0 0-7.1Z"/></svg></span><small>Favoritos</small></button>
   <button id="mobileEditBtn"><span class="mobile-nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 16.8-.8 3 3-.8L18.6 7.6a2.2 2.2 0 0 0-3.1-3.1z"/><path d="m14.2 5.8 4 4"/></svg></span><small>Editar</small></button>
 </nav>
 
@@ -98,7 +101,7 @@
 
 <div id="nowPlayingSheet" class="sheet-backdrop">
   <section class="now-sheet" role="dialog" aria-modal="true" aria-label="Ahora suena">
-    <header class="now-sheet-header"><button data-sheet-close="nowPlayingSheet" class="sheet-close now-dismiss" aria-label="Cerrar Ahora suena"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></button><strong id="nowSheetTitle">Ahora suena</strong></header>
+    <header class="now-sheet-header"><button data-sheet-close="nowPlayingSheet" class="sheet-close now-dismiss" aria-label="Cerrar Ahora suena"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></button><strong id="nowSheetTitle">Ahora suena</strong><button type="button" class="sheet-close favorite-btn" id="nowFavoriteBtn" aria-label="Guardar en favoritos" aria-pressed="false" hidden><svg class="ui-icon heart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 5.5a5 5 0 0 0-7.1 0L12 7.1l-1.6-1.6a5 5 0 0 0-7.1 7.1L12 21l8.7-8.4a5 5 0 0 0 0-7.1Z"/></svg></button></header>
     <div id="nowPlaybackPanel">
     <div id="nowLargeCover" class="now-large-cover">NBC</div>
     <div class="now-large-meta"><h2 id="nowLargeTitle">Selecciona una canción</h2><p id="nowLargeArtist">New BenifaClika</p><small id="nowLargeContext">RADIO DE LA CLIKA</small></div>
@@ -116,6 +119,32 @@
   </section>
 </div>
 
+
+<div id="listenerModal" class="modal-backdrop"><div class="modal login-modal listener-modal">
+  <header><div><h3>Mi cuenta</h3><p>Guarda tus canciones favoritas y llévalas a otro dispositivo.</p></div><button data-modal-close="listenerModal" class="x-btn" aria-label="Cerrar">×</button></header>
+  <div id="listenerGuest">
+    <div class="account-tabs" aria-label="Acceso a la cuenta"><button id="listenerSignInTab" type="button" class="chip active" aria-pressed="true">Entrar</button><button id="listenerRegisterTab" type="button" class="chip" aria-pressed="false">Crear cuenta</button></div>
+    <form id="listenerForm" class="form">
+      <label>Usuario<input id="listenerUsername" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="3" maxlength="24" required></label>
+      <label id="listenerKeyLabel">Clave de acceso<input id="listenerKey" type="password" autocomplete="current-password" maxlength="36" required></label>
+      <p id="listenerRegisterHint" class="account-hint" hidden>Usa caracteres de la A a la Z, números, puntos o guiones. Al registrarte recibirás una clave para entrar desde cualquier dispositivo.</p>
+      <footer><button id="listenerSubmit" class="primary">Entrar</button></footer>
+    </form>
+  </div>
+  <div id="listenerNewKey" class="form" hidden>
+    <p class="account-hint">Esta clave solo se muestra una vez. Guárdala junto a tu nombre de usuario: la necesitarás para entrar de nuevo. Si la pierdes, no podrás recuperar la cuenta.</p>
+    <label>Tu clave de acceso<input id="listenerIssuedKey" readonly spellcheck="false" autocomplete="off"></label>
+    <footer><button id="listenerCopyKey" type="button" class="secondary">Copiar clave</button><button type="button" data-modal-close="listenerModal" class="primary">Ya la he guardado</button></footer>
+  </div>
+  <div id="listenerMember" class="form" hidden>
+    <p class="account-hint">Sesión de <strong id="listenerDisplayName"></strong></p>
+    <div class="account-member-actions"><button id="listenerOpenFavorites" type="button" class="primary">Mis favoritos</button><button id="listenerLogout" type="button" class="secondary">Cerrar sesión</button></div>
+    <details class="account-delete"><summary>Eliminar mi cuenta</summary>
+      <form id="listenerDeleteForm" class="form"><p class="account-hint">Se eliminarán la cuenta, sus sesiones y todos sus favoritos. Confirma con tu clave de acceso.</p><label>Clave de acceso<input id="listenerDeleteKey" type="password" autocomplete="off" maxlength="36" required></label><button class="danger">Eliminar cuenta y favoritos</button></form>
+    </details>
+  </div>
+  <p id="listenerStatus" class="status" role="status" aria-live="polite"></p>
+</div></div>
 
 <dialog id="imageCropDialog" class="crop-dialog" aria-labelledby="imageCropTitle">
   <h2 id="imageCropTitle">Encuadrar imagen</h2>
