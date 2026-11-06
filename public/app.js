@@ -60,7 +60,7 @@ function syncPlaybackCards(){
     button.setAttribute('aria-label',`${playing?'Pausar':'Reproducir'} álbum ${albumById(button.dataset.playAlbum)?.title||''}`);
   });
 }
-function albumCard(a){const cover=albumCover(a),state=cardPlaybackState('album',a.id);return`<article class="media-card${state.current?' is-current':''}${state.playing?' playing':''}" data-album-id="${a.id}"><button class="cover" aria-label="Abrir álbum ${esc(a.title)}" onclick="NBCOpenAlbum('${a.id}')" ${coverStyle(cover)}>${cover?'':`<span class="album-fallback">${ALBUM_FALLBACK}</span>`}</button><button class="card-meta" onclick="NBCOpenAlbum('${a.id}')"><strong>${esc(a.title)}</strong><span>${esc(a.artists.join(' × '))}</span><span>${a.tracks.length} pistas · ${fmtLong(a.duration)}</span></button><div class="card-actions"><button class="btn-sm btn-open" onclick="NBCOpenAlbum('${a.id}')" aria-label="Ver álbum ${esc(a.title)}">Ver álbum <span aria-hidden="true">↗</span></button></div></article>`}
+function albumCard(a){const cover=albumCover(a),state=cardPlaybackState('album',a.id);return`<article class="media-card${state.current?' is-current':''}${state.playing?' playing':''}" data-album-id="${a.id}"><button class="cover" aria-label="Abrir álbum ${esc(a.title)}" onclick="NBCOpenAlbum('${a.id}')" ${coverStyle(cover)}>${cover?'':`<span class="album-fallback">${ALBUM_FALLBACK}</span>`}</button><button class="card-meta" onclick="NBCOpenAlbum('${a.id}')"><strong>${esc(a.title)}</strong><span>${esc(a.artists.join(' × '))}</span><span>${a.tracks.length} pistas · ${fmtLong(a.duration)}</span></button><div class="card-actions"><button class="btn-sm btn-open" onclick="NBCOpenAlbum('${a.id}')" aria-label="Ver álbum ${esc(a.title)}">Ver álbum</button></div></article>`}
 function singleCard(t){const c=trackCover(t),state=cardPlaybackState('track',t.id);return`<article class="media-card${state.current?' is-current':''}${state.playing?' playing':''}" data-track-id="${t.id}"><button class="cover" aria-label="Reproducir ${esc(t.title)}" ${coverStyle(c)} onclick="NBCPlayTrack('${t.id}')">${c?'':`<span class="initial">${esc(initials(trackArtists(t)[0]))}</span>`}</button><button class="card-meta" onclick="NBCPlayTrack('${t.id}')"><strong>${esc(t.title)}</strong><span>${esc(artistText(t))}</span><span>Single</span></button>${user?`<div class="card-actions"><button class="btn-sm btn-edit" onclick="NBCEditTrack('${t.id}')">Editar</button><button class="btn-sm btn-edit" onclick="NBCDeleteTrack('${t.id}')">Borrar</button></div>`:`<div class="card-actions"><button class="btn-sm btn-play" onclick="NBCPlayTrack('${t.id}')">${cardPlayContent(state.playing)}</button>${queueAddButton(t)}</div>`}</article>`}
 function artistCard(name){const a=artistByName(name),photo=a.photo_key?mediaUrl(a.photo_key):'',list=tracks.filter(t=>trackArtists(t).includes(name)),collabs=list.filter(t=>trackArtists(t).length>1).length;return`<article class="media-card artist-card"><button class="cover" ${coverStyle(photo)} onclick="NBCOpenArtist('${artistToken(name)}')">${photo?'':`<span class="initial">${esc(initials(name))}</span>`}</button><button class="card-meta" onclick="NBCOpenArtist('${artistToken(name)}')"><strong>${esc(name)}</strong><span>${list.length} temas · ${collabs} collabs</span></button><div class="card-actions"><button class="btn-sm btn-play" onclick="NBCPlayArtist('${artistToken(name)}')">${ICONS.play} Reproducir</button><button class="btn-sm btn-edit" onclick="NBCOpenArtist('${artistToken(name)}')">Ver perfil</button></div></article>`}
 function trackRow(t,{albumId=null}={}){const play=albumId?`NBCPlayAlbumTrack('${albumId}','${t.id}')`:`NBCPlayTrack('${t.id}')`,c=trackCover(t),playing=currentTrack?.id===t.id&&!audio.paused&&!audio.ended;return`<div class="track-row ${playing?'playing':''}" data-track-id="${t.id}"><button class="row-cover" aria-label="Reproducir ${esc(t.title)}" ${coverStyle(c)} onclick="${play}">${c?'':esc(initials(trackArtists(t)[0]))}</button><button class="row-main" onclick="${play}"><strong>${esc(t.title)}</strong><span>${esc(artistText(t))}${t.album_id?` · ${esc(albumById(t.album_id)?.title||'')}`:''}</span><div class="row-submeta">${fmt(t.duration_seconds)}</div></button><div class="row-actions">${queueAddButton(t)}${user?`<button class="circle-btn edit-mobile" onclick="NBCEditTrack('${t.id}')" aria-label="Editar ${esc(t.title)}">${EDIT_ICON}</button><button class="circle-btn delete-track-btn" onclick="NBCDeleteTrack('${t.id}')" aria-label="Borrar ${esc(t.title)}">${TRASH_ICON}</button>`:''}</div></div>`}
@@ -169,8 +169,8 @@ if('mediaSession'in navigator){const action=(n,f)=>{try{navigator.mediaSession.s
 renderModes();function restoreTrackOnce(){if(window.__restored)return;window.__restored=true;const id=localStorage.getItem('nbc_current_track');if(id&&trackById(id)){currentTrack=trackById(id);buildQueue({type:'radio',id:null,name:'Radio de la clika'},id);audio.src=mediaUrl(currentTrack.audio_key);audio.load();updateNowUI()}}
 const sheetCloseTimers=new Map();let sheetEnterTimer=0;
 function resetSheet(id){const backdrop=$(id),sheet=q('.now-sheet',backdrop);clearTimeout(sheetEnterTimer);clearTimeout(sheetCloseTimers.get(id));sheetCloseTimers.delete(id);backdrop.classList.remove('show','closing','opening');sheet?.classList.remove('dragging');sheet?.style.removeProperty('--sheet-drag');document.body.classList.remove('has-now-sheet')}
-function openSheet(id){resetSheet(id);$(id).classList.add('show','opening');sheetEnterTimer=setTimeout(()=>$(id).classList.remove('opening'),280);document.body.classList.add('has-now-sheet');history.pushState({nbc:true,overlay:id},'',location.href);q('[data-sheet-close]',$(id))?.focus()}
-function closeSheetDirect(id){const backdrop=$(id);if(!backdrop?.classList.contains('show')||backdrop.classList.contains('closing'))return;const sheet=q('.now-sheet',backdrop);sheet?.classList.remove('dragging');backdrop.classList.add('closing');const finish=()=>{resetSheet(id);$('openNowPlayingBtn').focus()};if(matchMedia('(prefers-reduced-motion: reduce)').matches)return finish();sheetCloseTimers.set(id,setTimeout(finish,260))}
+function openSheet(id,showQueue=false){resetSheet(id);setQueueView(showQueue);$(id).classList.add('show','opening');sheetEnterTimer=setTimeout(()=>$(id).classList.remove('opening'),280);document.body.classList.add('has-now-sheet');history.pushState({nbc:true,overlay:id},'',location.href);q('[data-sheet-close]',$(id))?.focus()}
+function closeSheetDirect(id){const backdrop=$(id);if(!backdrop?.classList.contains('show')||backdrop.classList.contains('closing'))return;const sheet=q('.now-sheet',backdrop);sheet?.classList.remove('dragging');backdrop.classList.add('closing');const opener=queueVisible?'nowQueueBtn':'openNowPlayingBtn';const finish=()=>{resetSheet(id);setQueueView(false);$(opener).focus()};if(matchMedia('(prefers-reduced-motion: reduce)').matches)return finish();sheetCloseTimers.set(id,setTimeout(finish,260))}
 function closeSheet(id){if(!$(id)?.classList.contains('show')||$(id).classList.contains('closing'))return;closeSheetDirect(id);if(history.state?.overlay===id)history.back()}
 $('openNowPlayingBtn').onclick=()=>openSheet('nowPlayingSheet');$$('[data-sheet-close]').forEach(b=>b.onclick=()=>closeSheet(b.dataset.sheetClose));
 const nowSheet=q('.now-sheet',$('nowPlayingSheet'));let sheetDrag=null,sheetFrame=0;
@@ -213,7 +213,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!q('.modal-
 function renderQueue(){
  if(document.hidden){return}
  const next=Math.max(0,playback.pos+1),upcoming=playback.queue.slice(next),count=upcoming.length;
- $('nowQueueBtn').setAttribute('aria-label',queueVisible?'Volver a Ahora suena':`Ver cola: ${count} canciones`);
+ $('nowQueueBtn').setAttribute('aria-label',`Ver cola: ${count} canciones`);
  $('nowQueueBtn').setAttribute('aria-expanded',String(queueVisible));
  if(!queueVisible)return;
  $('queueSummary').textContent=`${count} ${count===1?'canción':'canciones'} a continuación`;
@@ -225,11 +225,11 @@ function renderQueue(){
  }).join('')||'<li class="queue-empty">La cola está vacía.</li>';
  $('queueMore').hidden=count<=queueLimit;
 }
-function toggleQueue(){
- queueVisible=!queueVisible;queueLimit=50;$('nowPlaybackPanel').hidden=queueVisible;$('nowQueuePanel').hidden=!queueVisible;
- $('nowQueueBtn').classList.toggle('active',queueVisible);nowSheet.scrollTop=0;renderQueue();
+function setQueueView(visible){
+ queueVisible=visible;queueLimit=50;$('nowPlaybackPanel').hidden=queueVisible;$('nowQueuePanel').hidden=!queueVisible;
+ $('nowQueueBtn').classList.toggle('active',queueVisible);$('nowSheetTitle').textContent=visible?'Cola de reproducción':'Ahora suena';nowSheet.setAttribute('aria-label',$('nowSheetTitle').textContent);q('[data-sheet-close]',$('nowPlayingSheet'))?.setAttribute('aria-label',visible?'Cerrar cola':'Cerrar Ahora suena');nowSheet.scrollTop=0;renderQueue();
 }
-$('nowQueueBtn').innerHTML=QUEUE_ICON;$('nowQueueBtn').onclick=toggleQueue;
+$('nowQueueBtn').innerHTML=QUEUE_ICON;$('nowQueueBtn').onclick=()=>openSheet('nowPlayingSheet',true);
 $('queueMore').onclick=()=>{queueLimit+=50;renderQueue()};
 window.NBCAddQueue=id=>{const t=trackById(id);if(!t)return;queueTools.add(playback,id,currentTrack?.id);renderQueue();prepareNextTrack();toast(`“${t.title}” añadida a la cola.`)};
 window.NBCRemoveQueue=index=>{if(queueTools.remove(playback,index)){renderQueue();prepareNextTrack();toast('Canción quitada de la cola.')}};
@@ -267,6 +267,7 @@ async function refreshAfterSave(){try{await loadAll()}catch{toast('Guardado. No 
 $$('.status').forEach(status=>{status.setAttribute('role','status');status.setAttribute('aria-live','polite')});
 $('toast').setAttribute('role','status');
 document.addEventListener('keydown',event=>{
+  if($('imageCropDialog').open)return;
   const modal=$$('.modal-backdrop.show').at(-1);if(!modal)return;
   if(event.key==='Escape'){event.preventDefault();closeModal(modal.id);return}
   if(event.key==='Tab'){
@@ -282,6 +283,87 @@ async function editorEntry(){if(user){openModal('editMenuModal');loadStorageStat
 $('loginForm').onsubmit=async e=>{e.preventDefault();$('loginStatus').innerHTML='<span class="spinner"></span>Entrando…';try{await api('/api/auth/login',{method:'POST',body:JSON.stringify({password:$('loginPassword').value})});user=true;$('loginPassword').value='';$('loginStatus').textContent='';closeModal('loginModal');setEditorUI();openModal('editMenuModal');loadStorageStatus()}catch(err){$('loginStatus').textContent=err.message}};
 $('logoutAction').onclick=async()=>{await api('/api/auth/logout',{method:'POST'}).catch(()=>{});user=false;closeModal('editMenuModal');setEditorUI();toast('Modo edición cerrado.')};
 async function loadStorageStatus(){try{const s=await api('/api/storage');$('storageText').textContent=`${formatBytes(s.bytes)} / ${formatBytes(s.limit_bytes)} (${s.percent.toFixed(1)}%)`;$('storageBar').style.width=`${Math.min(100,s.percent)}%`;$('storageBar').style.background=s.percent>90?'#ff8b8b':s.percent>75?'#f6cf65':'var(--active)'}catch{$('storageText').textContent='No disponible'}}$('recountStorageBtn').onclick=async()=>{try{$('storageText').textContent='Recalculando…';const s=await api('/api/storage/recount',{method:'POST'});toast(`R2 recalculado: ${formatBytes(s.bytes)}`);loadStorageStatus()}catch(e){toast(e.message)}};
+// Encadre cuadrado en píxeles de origen, compartido por la vista previa y el archivo final.
+function cropRect(width,height,zoom,x,y){
+ const size=Math.min(width,height)/zoom;
+ return {size,x:(width-size)*x,y:(height-size)*y};
+}
+const framedImages=new WeakMap();
+function selectedImage(input){
+ const original=input?.files[0],entry=framedImages.get(input);
+ return entry&&entry.original===original?entry.file:original;
+}
+function bindImageCrop(input,circle=false,onSelect=()=>{}){
+ input.onchange=()=>{
+  const original=input.files[0];if(!original)return;
+  const dialog=$('imageCropDialog'),frame=$('imageCropFrame'),canvas=$('imageCropPreview'),status=$('imageCropStatus');
+  const zoom=$('imageCropZoom'),horizontal=$('imageCropX'),vertical=$('imageCropY'),apply=$('imageCropApply');
+  const originalButton=$('imageCropOriginal'),cancel=$('imageCropCancel');
+  const previous=framedImages.get(input);
+  let bitmap=null,drag=null,result=null;
+  const url=URL.createObjectURL(original),img=new Image();
+  const rect=()=>cropRect(bitmap.naturalWidth,bitmap.naturalHeight,Number(zoom.value),Number(horizontal.value)/1000,Number(vertical.value)/1000);
+  const controls=[zoom,horizontal,vertical];
+  function draw(target){
+   const ctx=target.getContext('2d'),r=rect();
+   ctx.clearRect(0,0,target.width,target.height);
+   ctx.drawImage(bitmap,r.x,r.y,r.size,r.size,0,0,target.width,target.height);
+  }
+  const redraw=()=>{if(bitmap)draw(canvas)};
+  frame.classList.toggle('crop-circle',circle);zoom.value='1';horizontal.value=vertical.value='500';
+  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  status.textContent='Cargando imagen…';apply.disabled=true;originalButton.disabled=false;cancel.disabled=false;
+  controls.forEach(control=>{control.disabled=true;control.oninput=redraw});
+  canvas.onpointerdown=e=>{
+   if(!bitmap||apply.disabled||e.button!==0)return;
+   const r=rect(),bounds=canvas.getBoundingClientRect();
+   drag={id:e.pointerId,x:e.clientX,y:e.clientY,left:Number(horizontal.value),top:Number(vertical.value),step:r.size/bounds.width};
+   canvas.setPointerCapture(e.pointerId);
+  };
+  canvas.onpointermove=e=>{
+   if(!drag||e.pointerId!==drag.id)return;
+   const r=rect(),clamp=value=>Math.max(0,Math.min(1000,value));
+   const roomX=bitmap.naturalWidth-r.size,roomY=bitmap.naturalHeight-r.size;
+   if(roomX>0)horizontal.value=String(clamp(drag.left-(e.clientX-drag.x)*drag.step*1000/roomX));
+   if(roomY>0)vertical.value=String(clamp(drag.top-(e.clientY-drag.y)*drag.step*1000/roomY));
+   redraw();
+  };
+  canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=()=>{drag=null};
+  cancel.onclick=()=>dialog.close();
+  originalButton.onclick=()=>{result=original;dialog.close()};
+  apply.onclick=async()=>{
+   if(!bitmap||apply.disabled)return;
+   apply.disabled=true;originalButton.disabled=true;cancel.disabled=true;status.textContent='Preparando imagen…';
+   try{
+    const output=document.createElement('canvas'),size=Math.min(1200,Math.max(1,Math.round(rect().size)));
+    output.width=output.height=size;draw(output);
+    const blob=await new Promise(resolve=>output.toBlob(resolve,'image/webp',.94));
+    if(!blob)throw new Error();
+    if(!dialog.open||dialog.onclose!==closeCrop)return;
+    result=new File([blob],fileBase(original)+(blob.type==='image/webp'?'.webp':'.png'),{type:blob.type});dialog.close();
+   }catch{if(dialog.open){status.textContent='No se pudo recortar la imagen. Puedes reintentar o usar la original.';apply.disabled=originalButton.disabled=cancel.disabled=false}}
+  };
+  function closeCrop(){
+   URL.revokeObjectURL(url);
+   if(input.files[0]!==original)return;
+   if(!result){
+    input.value='';
+    if(previous){const restored=new DataTransfer();restored.items.add(previous.original);input.files=restored.files;framedImages.set(input,{original:input.files[0],file:previous.file})}
+    return;
+   }
+   framedImages.set(input,{original,file:result});onSelect(result);
+  }
+  dialog.onclose=closeCrop;
+  dialog.showModal();
+  img.onload=()=>{
+   if(!dialog.open||dialog.onclose!==closeCrop||input.files[0]!==original)return;
+   bitmap=img;redraw();status.textContent='';apply.disabled=false;controls.forEach(control=>control.disabled=false);
+  };
+  img.onerror=()=>{if(dialog.open&&dialog.onclose===closeCrop)status.textContent='No se puede previsualizar este formato. Puedes usar el original o elegir otra imagen.'};
+  img.src=url;
+ };
+}
+
 async function optimizeImage(file,max=1400,quality=.86){if(!file||!file.type.startsWith('image/'))return file;if(file.size<420000)return file;const bitmap=await createImageBitmap(file);const scale=Math.min(1,max/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();const blob=await new Promise(r=>canvas.toBlob(r,'image/webp',quality));return new File([blob],file.name.replace(/\.[^.]+$/,'.webp'),{type:'image/webp'})}
 function audioDuration(file){return new Promise((resolve,reject)=>{const u=URL.createObjectURL(file),a=new Audio();a.preload='metadata';a.onloadedmetadata=()=>{const d=Math.round(a.duration)||null;URL.revokeObjectURL(u);resolve(d)};a.onerror=()=>{URL.revokeObjectURL(u);reject(new Error(`No se pudo leer ${file.name}`))};a.src=u})}
 async function uploadFile(file,kind,onProgress,uploadId=null){
@@ -299,8 +381,9 @@ async function uploadFile(file,kind,onProgress,uploadId=null){
   });
 }
 async function rollbackKeys(keys){for(const key of [...keys].reverse()){try{await api(`/api/files?key=${encodeURIComponent(key)}`,{method:'DELETE'})}catch{}}}
-$('addTrackAction').onclick=()=>{closeModal('editMenuModal');openTrackEditor()};function openTrackEditor(id=null){const t=id?trackById(id):null;$('trackModalTitle').textContent=t?'Editar tema':'Añadir tema';$('trackId').value=t?.id||'';$('trackTitle').value=t?.title||'';$('trackAudio').value='';$('trackCover').value='';$('trackCoverLabel').style.display=t?.album_id?'none':'';setPicker($('trackArtists'),t?trackArtists(t):MEMBERS.slice(0,1));$('trackStatus').textContent='';openModal('trackModal')}window.NBCEditTrack=id=>openTrackEditor(id);
-$('trackForm').onsubmit=async e=>{e.preventDefault();if(uploadBusy)return;const id=$('trackId').value||null,t=id?trackById(id):null,title=$('trackTitle').value.trim(),artistsSel=selectedArtists($('trackArtists')),audioFile=$('trackAudio').files[0],coverFile=$('trackCover').files[0];if(!title||!artistsSel.length)return $('trackStatus').textContent='Falta título o artistas.';if(!id&&!audioFile)return $('trackStatus').textContent='Selecciona un audio.';const unlock=lockForm('trackForm');$('trackStatus').innerHTML='<span class="spinner"></span>Guardando…';const uploaded=[];try{let audio_key=t?.audio_key,cover_key=t?.cover_key,duration=t?.duration_seconds||null;if(audioFile){duration=await audioDuration(audioFile);const up=await uploadFile(audioFile,'audio');audio_key=up.key;uploaded.push(up.key)}if(coverFile){const up=await uploadFile(coverFile,'cover');cover_key=up.key;uploaded.push(up.key)}const payload={title,artists:artistsSel,audio_key,cover_key,duration_seconds:duration};if(id)await api(`/api/tracks/${encodeURIComponent(id)}`,{method:'PUT',body:JSON.stringify(payload)});else await api('/api/tracks',{method:'POST',body:JSON.stringify(payload)});closeModal('trackModal',true);await refreshAfterSave();toast(id?'Tema actualizado.':'Tema añadido.')}catch(err){await rollbackKeys(uploaded);$('trackStatus').textContent=err.message}finally{unlock()}};
+bindImageCrop($('trackCover'));
+$('addTrackAction').onclick=()=>{closeModal('editMenuModal');openTrackEditor()};function openTrackEditor(id=null){const t=id?trackById(id):null;$('trackModalTitle').textContent=t?'Editar tema':'Añadir tema';$('trackId').value=t?.id||'';$('trackTitle').value=t?.title||'';$('trackAudio').value='';framedImages.delete($('trackCover'));$('trackCover').value='';$('trackCoverLabel').style.display=t?.album_id?'none':'';setPicker($('trackArtists'),t?trackArtists(t):MEMBERS.slice(0,1));$('trackStatus').textContent='';openModal('trackModal')}window.NBCEditTrack=id=>openTrackEditor(id);
+$('trackForm').onsubmit=async e=>{e.preventDefault();if(uploadBusy)return;const id=$('trackId').value||null,t=id?trackById(id):null,title=$('trackTitle').value.trim(),artistsSel=selectedArtists($('trackArtists')),audioFile=$('trackAudio').files[0],coverFile=selectedImage($('trackCover'));if(!title||!artistsSel.length)return $('trackStatus').textContent='Falta título o artistas.';if(!id&&!audioFile)return $('trackStatus').textContent='Selecciona un audio.';const unlock=lockForm('trackForm');$('trackStatus').innerHTML='<span class="spinner"></span>Guardando…';const uploaded=[];try{let audio_key=t?.audio_key,cover_key=t?.cover_key,duration=t?.duration_seconds||null;if(audioFile){duration=await audioDuration(audioFile);const up=await uploadFile(audioFile,'audio');audio_key=up.key;uploaded.push(up.key)}if(coverFile){const up=await uploadFile(coverFile,'cover');cover_key=up.key;uploaded.push(up.key)}const payload={title,artists:artistsSel,audio_key,cover_key,duration_seconds:duration};if(id)await api(`/api/tracks/${encodeURIComponent(id)}`,{method:'PUT',body:JSON.stringify(payload)});else await api('/api/tracks',{method:'POST',body:JSON.stringify(payload)});closeModal('trackModal',true);await refreshAfterSave();toast(id?'Tema actualizado.':'Tema añadido.')}catch(err){await rollbackKeys(uploaded);$('trackStatus').textContent=err.message}finally{unlock()}};
 window.NBCDeleteTrack=async id=>{const t=trackById(id);if(!t||!confirm(`¿Borrar “${t.title}”?`))return;try{await api(`/api/tracks/${encodeURIComponent(id)}`,{method:'DELETE'});if(currentTrack?.id===id){transport.pause();currentTrack=null;audio.removeAttribute('src');audio.load()}await loadAll();loadStorageStatus();toast('Tema borrado.')}catch(e){toast(e.message)}};
 function fileBase(f){return f.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim()}
 let albumDraft=null,draftTimer,draftWrites=Promise.resolve();
@@ -373,7 +456,7 @@ function setAlbumFiles(files){
 async function openAlbumUpload(){
   if(uploadBusy)return;await draftWrites.catch(()=>{});
   if(!albumDraft){const stored=await NBCAlbumDraft.read();albumDraft=stored&&!stored.cleared?stored:newAlbumDraft()}
-  $('albumTitle').value=albumDraft.title;$('albumCover').value='';$('albumMultiAudio').value='';
+  $('albumTitle').value=albumDraft.title;framedImages.delete($('albumCover'));$('albumCover').value='';$('albumMultiAudio').value='';
   $('albumUploadStatus').textContent='';$('albumUploadProgress').classList.remove('show');
   renderAlbumDraft();openModal('albumUploadModal');persistAlbumDraft();
 }
@@ -381,7 +464,7 @@ $('addAlbumAction').onclick=()=>{closeModal('editMenuModal');openAlbumUpload()};
 $('buildAlbumRows').onclick=()=>buildAlbumRows($('albumTrackCount').value);
 $('albumTrackCount').onchange=()=>buildAlbumRows($('albumTrackCount').value);
 $('albumMultiAudio').onchange=e=>setAlbumFiles(e.target.files);
-$('albumCover').onchange=e=>{const file=e.target.files[0];if(!file||!albumDraft)return;readAlbumFields();rememberOldKey(albumDraft.cover);albumDraft.cover={file,fileInfo:fileInfo(file),uploadId:crypto.randomUUID(),key:null};renderAlbumDraft();persistAlbumDraft()};
+bindImageCrop($('albumCover'),false,file=>{if(!albumDraft)return;readAlbumFields();rememberOldKey(albumDraft.cover);albumDraft.cover={file,fileInfo:fileInfo(file),uploadId:crypto.randomUUID(),key:null};renderAlbumDraft();persistAlbumDraft()});
 $('albumUploadForm').addEventListener('input',scheduleAlbumDraft);
 $('albumUploadForm').addEventListener('change',scheduleAlbumDraft);
 const dz=$('albumDropzone');
@@ -456,26 +539,28 @@ $('albumUploadForm').onsubmit=async e=>{
   finally{unlock()}
 };
 function populateAlbumSelect(preselect=null){$('albumEditSelect').innerHTML=albums.map(a=>`<option value="${a.id}" ${a.id===preselect?'selected':''}>${esc(a.title)}</option>`).join('');renderAlbumEdit($('albumEditSelect').value)}
-function renderAlbumEdit(id){const a=albumById(id);albumEditFiles=[];albumRemoveIds=new Set();if(!a){$('albumEditFields').innerHTML='<div class="search-empty">No hay álbumes.</div>';return}$('albumEditFields').innerHTML=`<input id="albumEditingId" type="hidden" value="${a.id}"><label>Nombre<input id="albumEditTitle" value="${esc(a.title)}" required></label><label>Nueva portada<input id="albumEditCover" type="file" accept="image/*"></label><div class="section-head"><div><h2 style="font-size:14px">Canciones</h2><p>Edita, reordena o marca canciones para borrar.</p></div></div><div class="album-builder">${a.tracks.map((t,i)=>`<div class="album-track" data-edit-track="${t.id}"><div class="album-track-head"><strong>Pista ${i+1}</strong><div class="album-track-tools"><span>${fmt(t.duration_seconds)}</span><button type="button" class="album-remove-track" onclick="NBCMarkRemove('${t.id}')">Eliminar</button></div></div><div class="two-col"><label>Número<input class="album-edit-number" type="number" min="1" max="999" value="${t.track_number||i+1}"></label><label>Título<input class="album-edit-title" value="${esc(t.title)}" required></label></div><fieldset><legend>Artistas</legend><div class="artist-picker album-edit-artists">${pickerHtml(trackArtists(t))}</div></fieldset></div>`).join('')}</div><div class="content-section"><div class="section-head"><div><h2 style="font-size:14px">Añadir canciones</h2><p>Selecciona varios audios y aparecerán aquí.</p></div></div><label>Audios nuevos<input id="albumEditAddAudio" type="file" accept="audio/*,.mp3,.mpeg,.m4a,.wav,.ogg" multiple></label><div id="albumEditNewRows" class="album-builder"></div></div>`;const input=$('albumEditAddAudio');input.onchange=e=>{albumEditFiles=[...e.target.files];$('albumEditNewRows').innerHTML=albumEditFiles.map((f,i)=>`<div class="album-track" data-new-track="${i}"><div class="album-track-head"><strong>Nueva canción ${i+1}</strong><span>${esc(f.name)}</span></div><label>Título<input class="album-new-title" value="${esc(fileBase(f))}" required></label><fieldset><legend>Artistas</legend><div class="artist-picker album-new-artists">${pickerHtml(MEMBERS.slice(0,1))}</div></fieldset></div>`).join('')}}
+function renderAlbumEdit(id){const a=albumById(id);albumEditFiles=[];albumRemoveIds=new Set();if(!a){$('albumEditFields').innerHTML='<div class="search-empty">No hay álbumes.</div>';return}$('albumEditFields').innerHTML=`<input id="albumEditingId" type="hidden" value="${a.id}"><label>Nombre<input id="albumEditTitle" value="${esc(a.title)}" required></label><label>Nueva portada<input id="albumEditCover" type="file" accept="image/*"></label><div class="section-head"><div><h2 style="font-size:14px">Canciones</h2><p>Edita, reordena o marca canciones para borrar.</p></div></div><div class="album-builder">${a.tracks.map((t,i)=>`<div class="album-track" data-edit-track="${t.id}"><div class="album-track-head"><strong>Pista ${i+1}</strong><div class="album-track-tools"><span>${fmt(t.duration_seconds)}</span><button type="button" class="album-remove-track" onclick="NBCMarkRemove('${t.id}')">Eliminar</button></div></div><div class="two-col"><label>Número<input class="album-edit-number" type="number" min="1" max="999" value="${t.track_number||i+1}"></label><label>Título<input class="album-edit-title" value="${esc(t.title)}" required></label></div><fieldset><legend>Artistas</legend><div class="artist-picker album-edit-artists">${pickerHtml(trackArtists(t))}</div></fieldset></div>`).join('')}</div><div class="content-section"><div class="section-head"><div><h2 style="font-size:14px">Añadir canciones</h2><p>Selecciona varios audios y aparecerán aquí.</p></div></div><label>Audios nuevos<input id="albumEditAddAudio" type="file" accept="audio/*,.mp3,.mpeg,.m4a,.wav,.ogg" multiple></label><div id="albumEditNewRows" class="album-builder"></div></div>`;bindImageCrop($('albumEditCover'));const input=$('albumEditAddAudio');input.onchange=e=>{albumEditFiles=[...e.target.files];$('albumEditNewRows').innerHTML=albumEditFiles.map((f,i)=>`<div class="album-track" data-new-track="${i}"><div class="album-track-head"><strong>Nueva canción ${i+1}</strong><span>${esc(f.name)}</span></div><label>Título<input class="album-new-title" value="${esc(fileBase(f))}" required></label><fieldset><legend>Artistas</legend><div class="artist-picker album-new-artists">${pickerHtml(MEMBERS.slice(0,1))}</div></fieldset></div>`).join('')}}
 window.NBCMarkRemove=id=>{const row=q(`[data-edit-track="${CSS.escape(id)}"]`,$('albumEditFields'));if(!row)return;if(albumRemoveIds.has(id))albumRemoveIds.delete(id);else albumRemoveIds.add(id);row.classList.toggle('marked-delete',albumRemoveIds.has(id));q('.album-remove-track',row).textContent=albumRemoveIds.has(id)?'Mantener':'Eliminar'};
 function openAlbumManager(id=null){if(!albums.length)return toast('Todavía no hay álbumes.');populateAlbumSelect(id||albums[0].id);$('albumEditStatus').textContent='';openModal('albumEditModal')}$('albumManagerAction').onclick=()=>{closeModal('editMenuModal');openAlbumManager()};$('albumEditSelect').onchange=e=>renderAlbumEdit(e.target.value);window.NBCEditAlbum=id=>openAlbumManager(id);
-$('albumEditForm').onsubmit=async e=>{e.preventDefault();if(uploadBusy)return;const id=$('albumEditingId')?.value,a=albumById(id);if(!a)return;const title=$('albumEditTitle').value.trim(),coverFile=$('albumEditCover').files[0],existingRows=$$('[data-edit-track]',$('albumEditFields')),newRows=$$('[data-new-track]',$('albumEditFields'));if(!title)return $('albumEditStatus').textContent='Pon un nombre al álbum.';if(existingRows.filter(r=>!albumRemoveIds.has(r.dataset.editTrack)).length+newRows.length<1)return $('albumEditStatus').textContent='Un álbum necesita al menos una canción.';$('albumEditStatus').innerHTML='<span class="spinner"></span>Guardando…';const unlock=lockForm('albumEditForm');const uploaded=[];try{let cover_key=a.cover_key;if(coverFile){const up=await uploadFile(coverFile,'cover');cover_key=up.key;uploaded.push(up.key)}const existing=[];for(const row of existingRows){if(albumRemoveIds.has(row.dataset.editTrack))continue;const titleValue=q('.album-edit-title',row).value.trim(),artistsSel=selectedArtists(q('.album-edit-artists',row)),track_number=Number(q('.album-edit-number',row).value)||1;if(!titleValue||!artistsSel.length)throw new Error('Revisa las canciones existentes.');existing.push({id:row.dataset.editTrack,title:titleValue,artists:artistsSel,track_number})}const add=[];for(let i=0;i<newRows.length;i++){const row=newRows[i],file=albumEditFiles[i],titleValue=q('.album-new-title',row).value.trim(),artistsSel=selectedArtists(q('.album-new-artists',row));if(!file||!titleValue||!artistsSel.length)throw new Error(`Revisa la nueva canción ${i+1}.`);$('albumEditStatus').innerHTML=`<span class="spinner"></span>Subiendo ${i+1}/${newRows.length}: ${esc(titleValue)}`;const duration=await audioDuration(file),up=await uploadFile(file,'audio');uploaded.push(up.key);add.push({title:titleValue,artists:artistsSel,audio_key:up.key,duration_seconds:duration})}await api(`/api/albums/${encodeURIComponent(id)}`,{method:'PUT',body:JSON.stringify({title,cover_key,existing,add,remove_ids:[...albumRemoveIds]})});closeModal('albumEditModal',true);await refreshAfterSave();toast('Álbum actualizado.');$('albumEditStatus').textContent=''}catch(err){await rollbackKeys(uploaded);$('albumEditStatus').textContent=err.message}finally{unlock()}};
+$('albumEditForm').onsubmit=async e=>{e.preventDefault();if(uploadBusy)return;const id=$('albumEditingId')?.value,a=albumById(id);if(!a)return;const title=$('albumEditTitle').value.trim(),coverFile=selectedImage($('albumEditCover')),existingRows=$$('[data-edit-track]',$('albumEditFields')),newRows=$$('[data-new-track]',$('albumEditFields'));if(!title)return $('albumEditStatus').textContent='Pon un nombre al álbum.';if(existingRows.filter(r=>!albumRemoveIds.has(r.dataset.editTrack)).length+newRows.length<1)return $('albumEditStatus').textContent='Un álbum necesita al menos una canción.';$('albumEditStatus').innerHTML='<span class="spinner"></span>Guardando…';const unlock=lockForm('albumEditForm');const uploaded=[];try{let cover_key=a.cover_key;if(coverFile){const up=await uploadFile(coverFile,'cover');cover_key=up.key;uploaded.push(up.key)}const existing=[];for(const row of existingRows){if(albumRemoveIds.has(row.dataset.editTrack))continue;const titleValue=q('.album-edit-title',row).value.trim(),artistsSel=selectedArtists(q('.album-edit-artists',row)),track_number=Number(q('.album-edit-number',row).value)||1;if(!titleValue||!artistsSel.length)throw new Error('Revisa las canciones existentes.');existing.push({id:row.dataset.editTrack,title:titleValue,artists:artistsSel,track_number})}const add=[];for(let i=0;i<newRows.length;i++){const row=newRows[i],file=albumEditFiles[i],titleValue=q('.album-new-title',row).value.trim(),artistsSel=selectedArtists(q('.album-new-artists',row));if(!file||!titleValue||!artistsSel.length)throw new Error(`Revisa la nueva canción ${i+1}.`);$('albumEditStatus').innerHTML=`<span class="spinner"></span>Subiendo ${i+1}/${newRows.length}: ${esc(titleValue)}`;const duration=await audioDuration(file),up=await uploadFile(file,'audio');uploaded.push(up.key);add.push({title:titleValue,artists:artistsSel,audio_key:up.key,duration_seconds:duration})}await api(`/api/albums/${encodeURIComponent(id)}`,{method:'PUT',body:JSON.stringify({title,cover_key,existing,add,remove_ids:[...albumRemoveIds]})});closeModal('albumEditModal',true);await refreshAfterSave();toast('Álbum actualizado.');$('albumEditStatus').textContent=''}catch(err){await rollbackKeys(uploaded);$('albumEditStatus').textContent=err.message}finally{unlock()}};
 $('deleteAlbumBtn').onclick=async()=>{const id=$('albumEditingId')?.value,a=albumById(id);if(!a||!confirm(`¿Borrar el álbum “${a.title}” y todas sus canciones?`))return;try{await api(`/api/albums/${encodeURIComponent(id)}`,{method:'DELETE'});closeModal('albumEditModal');await loadAll();loadStorageStatus();showView('albums');toast('Álbum borrado.')}catch(e){toast(e.message)}};
 
 function fillArtists(){ $('profileArtist').innerHTML='<option value="">Crear artista…</option>'+MEMBERS.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('') }
+let profilePreviewUrl='';
 function refreshProfile(){
+ if(profilePreviewUrl){URL.revokeObjectURL(profilePreviewUrl);profilePreviewUrl=''}
  const name=$('profileArtist').value;creatingArtist=!name;const a=artistByName(name),p=a.photo_key?mediaUrl(a.photo_key):'';
  $('profileModalTitle').textContent=creatingArtist?'Añadir artista':'Editar artista';$('profileName').value=name;$('profileBio').value=a.bio||'';
  $('profilePreview').style.backgroundImage=p?`url("${p}")`:'';$('profilePreview').textContent=p?'':initials(name);
  $('removeProfilePhotoBtn').hidden=creatingArtist||!a.photo_key;$('removeArtistBtn').disabled=creatingArtist||MEMBERS.length<2;
  $('profileSaveBtn').textContent=creatingArtist?'Crear artista':'Guardar artista';
 }
-function openProfile(name=null){fillArtists();$('profileArtist').value=name&&MEMBERS.includes(name)?name:MEMBERS[0]||'';$('profilePhoto').value='';$('profileStatus').textContent='';refreshProfile();openModal('profileModal')}
+function openProfile(name=null){fillArtists();$('profileArtist').value=name&&MEMBERS.includes(name)?name:MEMBERS[0]||'';framedImages.delete($('profilePhoto'));$('profilePhoto').value='';$('profileStatus').textContent='';refreshProfile();openModal('profileModal')}
 $('profilesAction').onclick=()=>{closeModal('editMenuModal');openProfile()};
-$('profileArtist').onchange=()=>{$('profilePhoto').value='';$('profileStatus').textContent='';refreshProfile()};
-$('addArtistBtn').onclick=()=>{$('profileArtist').value='';$('profilePhoto').value='';$('profileStatus').textContent='';refreshProfile();$('profileName').focus()};
+$('profileArtist').onchange=()=>{framedImages.delete($('profilePhoto'));$('profilePhoto').value='';$('profileStatus').textContent='';refreshProfile()};
+$('addArtistBtn').onclick=()=>{$('profileArtist').value='';framedImages.delete($('profilePhoto'));$('profilePhoto').value='';$('profileStatus').textContent='';refreshProfile();$('profileName').focus()};
 window.NBCEditArtist=e=>openProfile(decodeURIComponent(e));
-$('profilePhoto').onchange=e=>{const f=e.target.files[0];if(f){const u=URL.createObjectURL(f);$('profilePreview').style.backgroundImage=`url("${u}")`;$('profilePreview').textContent=''}};
+bindImageCrop($('profilePhoto'),true,file=>{if(profilePreviewUrl)URL.revokeObjectURL(profilePreviewUrl);profilePreviewUrl=URL.createObjectURL(file);$('profilePreview').style.backgroundImage=`url("${profilePreviewUrl}")`;$('profilePreview').textContent=''});
 function applyArtistMutation(oldName,nextName,profile=null){
  const rename=list=>[...new Set(list.map(name=>name===oldName?nextName:name).filter(Boolean))];
  if(oldName){
@@ -489,7 +574,7 @@ function applyArtistMutation(oldName,nextName,profile=null){
 }
 $('profileForm').onsubmit=async e=>{
  e.preventDefault();if(uploadBusy)return;
- const oldName=$('profileArtist').value,name=$('profileName').value.trim(),bio=$('profileBio').value.trim(),file=$('profilePhoto').files[0],a=artistByName(oldName);
+ const oldName=$('profileArtist').value,name=$('profileName').value.trim(),bio=$('profileBio').value.trim(),file=selectedImage($('profilePhoto')),a=artistByName(oldName);
  if(!name||name.length>80)return $('profileStatus').textContent='Escribe un nombre de entre 1 y 80 caracteres.';
  if(MEMBERS.some(n=>n!==oldName&&n.normalize('NFKC').toLocaleLowerCase('es')===name.normalize('NFKC').toLocaleLowerCase('es')))return $('profileStatus').textContent='Ya existe un artista con ese nombre.';
  const unlock=lockForm('profileForm');$('profileStatus').innerHTML='<span class="spinner"></span>Guardando…';const uploaded=[];let committed=false;
@@ -518,6 +603,6 @@ $('artistRemoveForm').onsubmit=async e=>{
 window.addEventListener('beforeunload',e=>{if(uploadBusy){e.preventDefault();e.returnValue=''}});
 function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}function isMobileInstallContext(){return matchMedia('(max-width:760px)').matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)}function refreshInstall(){const b=$('installBtn');if(!b)return;if(isStandalone()){b.style.display='none';return}b.style.display=(deferredPrompt||isMobileInstallContext())?'inline-flex':'none'}function showInstallHelp(){const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent),title=$('installHelpTitle'),text=$('installHelpText');if(ios){title.textContent='Instalar en iPhone / iPad';text.textContent='Abre esta página en Safari, pulsa Compartir y elige “Añadir a pantalla de inicio”.'}else{title.textContent='Instalar en el móvil';text.textContent='Abre el menú de tu navegador y elige “Instalar aplicación” o “Añadir a pantalla de inicio”.'}openModal('installModal')}window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;refreshInstall()});window.addEventListener('appinstalled',()=>{deferredPrompt=null;refreshInstall();toast('New BenifaClika instalada.')});window.addEventListener('pageshow',refreshInstall);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshInstall()});try{matchMedia('(display-mode: standalone)').addEventListener('change',refreshInstall)}catch{}$('installBtn').onclick=async()=>{if(!deferredPrompt){showInstallHelp();return}const p=deferredPrompt;deferredPrompt=null;await p.prompt();refreshInstall()};
 $('copyrightYear').textContent=new Date().getFullYear();
-if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});window.addEventListener('online',loadAll);document.addEventListener('keydown',e=>{if(e.target.matches('input,textarea,select'))return;if(e.code==='Space'){e.preventDefault();needsPlaybackResume()?startCurrent():transport.pause()}else if(e.key==='ArrowRight'&&audio.duration)audio.currentTime=Math.min(audio.duration,audio.currentTime+5);else if(e.key==='ArrowLeft')audio.currentTime=Math.max(0,audio.currentTime-5)});
+if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});window.addEventListener('online',loadAll);document.addEventListener('keydown',e=>{if($('imageCropDialog').open||e.target.matches('input,textarea,select,button,a,summary'))return;if(e.code==='Space'){e.preventDefault();needsPlaybackResume()?startCurrent():transport.pause()}else if(e.key==='ArrowRight'&&audio.duration)audio.currentTime=Math.min(audio.duration,audio.currentTime+5);else if(e.key==='ArrowLeft')audio.currentTime=Math.max(0,audio.currentTime-5)});
 (async()=>{await Promise.all([loadAll(),authStatus()]);const route=routeFromUrl();history.replaceState({nbc:true,route},'',location.href);applyRoute(route,false);refreshInstall()})();
 })();
