@@ -16,9 +16,9 @@ class Element {
 }
 class Audio extends Element{
  constructor(){super();this.paused=true;this.ended=false;this.currentTime=0;this.duration=180;this.playbackRate=1;this.error=null;this.calls=[];this._src=''}
- set src(src){this._src=src;this.attrs.set('src',src);this.error=null;this.ended=false;this.currentTime=0;this.calls.push('src:'+src)}
+ set src(src){this._src=src;this.attrs.set('src',src);this.error=null;this.ended=false;this.currentTime=0;this.duration=NaN;this.calls.push('src:'+src)}
  get src(){return this._src}
- play(){this.paused=false;this.calls.push('play:'+this.src);return Promise.resolve()}
+ play(){this.paused=false;this.calls.push('play:'+this.src);this.onNativePlay?.();return Promise.resolve()}
  pause(){this.paused=true;this.emit('pause')}
  load(){this.calls.push('load')}
  emit(type){for(const fn of this.events[type]||[])fn({target:this})}
@@ -26,9 +26,12 @@ class Audio extends Element{
 test('complete application advances while hidden and updates Android media metadata without UI rendering',async()=>{
  const elements=new Map(),events={},winEvents={},audio=new Audio();elements.set('audio',audio);
  const document={hidden:false,visibilityState:'visible',title:'',activeElement:null,getElementById:id=>{if(!elements.has(id))elements.set(id,new Element(id));return elements.get(id)},querySelector:selector=>document.getElementById(selector),querySelectorAll:()=>[],addEventListener:(name,fn)=>(events[name]||=[]).push(fn)};
- const tracks=['one','two','three'].map((id,i)=>({id,title:'Song '+id,artists:['Artist'],audio_key:'audio/'+id+'.mp3',album_id:null,cover_key:null,created_at:'2026-01-0'+(3-i),duration_seconds:180}));
- const saved=new Map([['nbc_current_track','one']]),handlers={};
- const c={document,Audio,Image:class{},URL,URLSearchParams,Blob,File,Response,Promise,console,setTimeout,clearTimeout,structuredClone,innerWidth:390,scrollTo(){},matchMedia:()=>({matches:false,addEventListener(){}}),navigator:{onLine:true,userAgent:'Android Chrome',connection:{saveData:false},mediaSession:{setActionHandler(name,fn){handlers[name]=fn},setPositionState(){}}},MediaMetadata:class{constructor(data){Object.assign(this,data)}},location:new URL('https://nbc.test/'),history:{state:null,replaceState(state){this.state=state},pushState(state){this.state=state}},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value)},fetch:async path=>new Response(JSON.stringify(path==='/api/bootstrap'?{tracks,albums:[],artists:[{name:'Artist'}]}:{authenticated:false}),{status:200,headers:{'Content-Type':'application/json'}})};
+ const tracks=['one','two','three'].map((id,i)=>({id,title:'Song '+id,artists:['Artist'],audio_key:'audio/'+id+'.mp3',album_id:null,cover_key:'covers/'+id+'.webp',created_at:'2026-01-0'+(3-i),duration_seconds:180}));
+ const saved=new Map([['nbc_current_track','one']]),handlers={},positions=[],published=[],starts=[];
+ let nativeReady=true,notification=null,metadata=null;
+ const session={setActionHandler(name,fn){handlers[name]=fn},setPositionState(value){positions.push(value)},get metadata(){return metadata},set metadata(value){metadata=value;published.push(value);if(nativeReady)notification=value}};
+ audio.onNativePlay=()=>{starts.push({src:audio.src,metadata:session.metadata,position:positions.at(-1)});nativeReady=false;notification=null};
+ const c={document,Audio,Image:class{},URL,URLSearchParams,Blob,File,Response,Promise,console,setTimeout,clearTimeout,structuredClone,innerWidth:390,scrollTo(){},matchMedia:()=>({matches:false,addEventListener(){}}),navigator:{onLine:true,userAgent:'Android Chrome',connection:{saveData:false},mediaSession:session},MediaMetadata:class{constructor(data){Object.assign(this,data)}},location:new URL('https://nbc.test/'),history:{state:null,replaceState(state){this.state=state},pushState(state){this.state=state}},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value)},fetch:async path=>new Response(JSON.stringify(path==='/api/bootstrap'?{tracks,albums:[],artists:[{name:'Artist'}]}:{authenticated:false}),{status:200,headers:{'Content-Type':'application/json'}})};
  c.window=c;c.addEventListener=(name,fn)=>(winEvents[name]||=[]).push(fn);
  vm.createContext(c);
  for(const path of ['public/playback-tools.js','public/audio-runtime.js','public/app.js'])vm.runInContext(fs.readFileSync(new URL('../'+path,import.meta.url),'utf8'),c);
@@ -38,8 +41,25 @@ test('complete application advances while hidden and updates Android media metad
  assert.equal(c.navigator.mediaSession.playbackState,'playing');assert.equal(c.navigator.mediaSession.metadata.title,'Song one');
  document.hidden=true;document.visibilityState='hidden';for(const fn of events.visibilitychange)fn();
  audio.ended=true;audio.paused=true;audio.emit('pause');audio.emit('ended');await new Promise(setImmediate);
+ assert.equal(starts.at(-1).metadata.title,'Song two','new metadata must precede native play');assert.equal(starts.at(-1).position,undefined,'previous song timeline cleared before play');
  assert.equal(audio.src,'/media/audio/two.mp3');assert.equal(c.navigator.mediaSession.metadata.title,'Song two');assert.equal(c.navigator.mediaSession.playbackState,'playing');
+ // A newly activated native player must get a fresh publication even if initial
+ // source selection happened while Android's previous media session was ending.
+ nativeReady=true;audio.duration=240;audio.emit('loadedmetadata');audio.emit('playing');
+ assert.equal(notification.title,'Song two');assert.equal(positions.at(-1).duration,240);assert.equal(positions.at(-1).position,0);
+ assert.equal(session.playbackState,'playing');
+ audio.currentTime=23;audio.playbackRate=1.25;audio.emit('ratechange');
+ assert.equal(positions.at(-1).playbackRate,1.25);assert.equal(positions.at(-1).position,23);
+ // Repeat the automatic transition without bringing the app into the foreground.
+ audio.currentTime=240;audio.ended=true;audio.paused=true;audio.emit('pause');audio.emit('ended');await new Promise(setImmediate);
+ assert.equal(audio.src,'/media/audio/three.mp3');assert.equal(session.metadata.title,'Song three');
+ nativeReady=true;audio.duration=Infinity;audio.emit('durationchange');assert.equal(positions.at(-1),undefined);
+ audio.duration=150;audio.emit('durationchange');const beforePlaying=published.length;audio.emit('playing');
+ assert.ok(published.length>beforePlaying,'native playing republishes current metadata');
+ assert.equal(notification.title,'Song three');assert.equal(notification.artist,'Artist');
+ assert.equal(notification.artwork[0].src,'https://nbc.test/media/covers/three.webp');
+ assert.equal(positions.at(-1).duration,150);assert.equal(positions.at(-1).position,0);
  assert.equal(elements.get('playerTitle').textContent,'Song one'); // hidden UI is deliberately deferred
- document.hidden=false;document.visibilityState='visible';for(const fn of events.visibilitychange)fn();assert.equal(elements.get('playerTitle').textContent,'Song two');
+ document.hidden=false;document.visibilityState='visible';for(const fn of events.visibilitychange)fn();assert.equal(elements.get('playerTitle').textContent,'Song three');
  handlers.pause();assert.equal(audio.paused,true);assert.equal(c.navigator.mediaSession.playbackState,'paused');
 });

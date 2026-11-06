@@ -84,7 +84,7 @@ function needsPlaybackResume(){return audio.paused||audio.ended||!!audio.error||
 function setPlayState(){if(document.hidden){return}const loading=!!currentTrack&&(isStarting||isBuffering),playing=!!currentTrack&&!audio.paused&&!audio.ended&&!audio.error&&!transport.recoveryNeeded&&!loading;['playBtn','nowPlayBtn'].forEach(id=>{const b=$(id);b?.classList.toggle('loading',loading);const i=b?.querySelector('.play-icon');if(i)i.innerHTML=playing?ICONS.pause:ICONS.play;b?.setAttribute('aria-label',playing?'Pausar':'Reproducir');b?.setAttribute('title',playing?'Pausar':'Reproducir')});$('player').classList.toggle('playing',playing);$$('[data-track-id]').forEach(r=>r.classList.toggle('playing',playing&&r.dataset.trackId===currentTrack?.id));syncPlaybackCards();renderQueue()}
 function renderModes(){[['shuffleBtn',playback.shuffle],['nowShuffleBtn',playback.shuffle],['repeatBtn',playback.repeat],['nowRepeatBtn',playback.repeat]].forEach(([id,on])=>{const b=$(id);if(!b)return;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));const s=b.querySelector('small');if(s)s.textContent=on?'ON':'OFF'});audio.loop=playback.repeat}
 function paintProgress(el,pct){if(!el)return;const value=Math.max(0,Math.min(100,Number(pct)||0));el.value=value;el.style.setProperty('--played',value+'%')}
-function updateProgress(){const duration=Number(audio.duration),d=Number.isFinite(duration)&&duration>0?duration:0,p=d?(audio.currentTime/d)*100:0;if(!document.hidden){['progress','nowProgress'].forEach(id=>paintProgress($(id),p));$('currentTime').textContent=audio.currentTime>=1?fmt(audio.currentTime):'0:00';$('nowCurrentTime').textContent=$('currentTime').textContent;$('duration').textContent=d?fmt(d):'0:00';$('nowDuration').textContent=d?fmt(d):'0:00';}try{if('mediaSession'in navigator&&d>0)navigator.mediaSession.setPositionState({duration:d,playbackRate:audio.playbackRate||1,position:Math.min(audio.currentTime,d)})}catch{}}
+function updateProgress(){const duration=Number(audio.duration),d=Number.isFinite(duration)&&duration>0?duration:0,p=d?(audio.currentTime/d)*100:0;if(!document.hidden){['progress','nowProgress'].forEach(id=>paintProgress($(id),p));$('currentTime').textContent=audio.currentTime>=1?fmt(audio.currentTime):'0:00';$('nowCurrentTime').textContent=$('currentTime').textContent;$('duration').textContent=d?fmt(d):'0:00';$('nowDuration').textContent=d?fmt(d):'0:00';}try{if('mediaSession'in navigator){if(d>0)navigator.mediaSession.setPositionState({duration:d,playbackRate:audio.playbackRate||1,position:Math.max(0,Math.min(Number(audio.currentTime)||0,d))});else navigator.mediaSession.setPositionState()}}catch{}}
 function updateNowUI(){if(document.hidden){document.title=currentTrack?`${currentTrack.title} · New BenifaClika`:'New BenifaClika';syncMediaSession();return}const t=currentTrack,c=t?trackCover(t):'';const title=t?.title||'Selecciona una canción',artist=t?artistText(t):'New BenifaClika',ctx=contextText();[['playerCover',c,t],['nowLargeCover',c,t]].forEach(([id,url,tr])=>{const e=$(id);e.style.backgroundImage=url?`url("${url}")`:'';e.textContent=url?'':tr?initials(trackArtists(tr)[0]):'NBC'});$('playerTitle').textContent=title;$('nowLargeTitle').textContent=title;$('playerArtist').textContent=artist;$('nowLargeArtist').textContent=artist;$('playerContext').textContent=ctx;$('nowLargeContext').textContent=ctx;document.title=t?`${t.title} · New BenifaClika`:'New BenifaClika';syncMediaSession();setPlayState()}
 async function playTrack(id,{record=true,queueIndex=null}={}){
  const t=trackById(id);if(!t)return;
@@ -92,6 +92,9 @@ async function playTrack(id,{record=true,queueIndex=null}={}){
  if(queueIndex===null)failedTracks.delete(id);
  const seq=++playSeq;currentTrack=t;playback.pos=queueIndex??Math.max(0,playback.queue.indexOf(id));
  if(record&&playback.history.at(-1)!==id)playback.history.push(id);
+ // Android can snapshot metadata as soon as play() acquires audio focus.
+ // Publish the next song and clear the previous timeline before starting its source.
+ syncMediaSession();try{navigator.mediaSession?.setPositionState()}catch{}
  const attempt=transport.select(mediaUrl(t.audio_key));updateNowUI();ensureQueue();
  if(await attempt&&seq===playSeq){try{localStorage.setItem('nbc_current_track',id)}catch{}}
 }
@@ -125,12 +128,12 @@ const transport=new NBCBackgroundAudio({
  audio,
  onState(state){
   wantsPlayback=state.wanted;isStarting=state.starting;isBuffering=state.buffering;
-  try{navigator.mediaSession.playbackState=state.wanted&&!state.blocked&&!state.recoveryNeeded?'playing':'paused'}catch{}
-  if(state.wanted&&!state.starting&&!state.buffering){syncMediaSession();prepareNextTrack()}
+  refreshNativeSession();
+  if(state.wanted&&!state.starting&&!state.buffering)prepareNextTrack()
   setPlayState();
  },
  onEnded(){if(!playback.repeat)nextTrack(false)},
- onMetadata(){updateProgress();syncMediaSession()},
+ onMetadata:refreshNativeSession,
  onUnavailable(){
   if(currentTrack)failedTracks.add(currentTrack.id);
   if(failedTracks.size>=tracks.length){transport.pause();reportPlaybackProblem('No se pudo reproducir ningún audio. Revisa la conexión o los archivos.')}
@@ -138,6 +141,15 @@ const transport=new NBCBackgroundAudio({
  },
  onProblem:reportPlaybackProblem
 });
+// Refresh at native lifecycle boundaries as Android may recreate its notification
+// after ended/load, independently of the play() promise and page visibility.
+function refreshNativeSession(){
+ syncMediaSession();updateProgress();
+ try{navigator.mediaSession.playbackState=wantsPlayback&&!transport.blocked&&!transport.recoveryNeeded?'playing':'paused'}catch{}
+}
+audio.addEventListener('playing',refreshNativeSession);
+audio.addEventListener('durationchange',refreshNativeSession);
+audio.addEventListener('seeked',updateProgress);audio.addEventListener('ratechange',updateProgress);
 audio.addEventListener('timeupdate',updateProgress);audio.addEventListener('emptied',updateProgress);
 window.addEventListener('online',()=>transport.recover());
 
