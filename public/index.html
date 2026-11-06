@@ -136,9 +136,10 @@
 <div id="artistRemoveModal" class="modal-backdrop"><div class="modal login-modal"><header><div><h3>Quitar artista</h3><p id="artistRemoveText"></p></div><button data-modal-close="artistRemoveModal" class="x-btn" aria-label="Cerrar">×</button></header><form id="artistRemoveForm" class="form"><input id="artistRemoveName" type="hidden"><label id="artistReplacementLabel">Reasignar sus canciones a<select id="artistReplacement"></select></label><p class="artist-name-help">Se conservarán los audios, las portadas y los álbumes.</p><div id="artistRemoveStatus" class="status"></div><footer><button type="button" data-modal-close="artistRemoveModal" class="secondary">Cancelar</button><button class="primary">Quitar artista</button></footer></form></div></div>
 
 <div id="toast" class="toast"></div>
-<audio id="audio" preload="metadata" playsinline></audio>
+<audio id="audio" preload="auto" playsinline></audio>
 <script src="/album-draft.js"></script>
 <script src="/playback-tools.js"></script>
+<script src="/audio-runtime.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

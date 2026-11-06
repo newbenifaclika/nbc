@@ -5,12 +5,12 @@ import vm from 'node:vm';
 const app=fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8'),toolsSource=fs.readFileSync(new URL('../public/playback-tools.js',import.meta.url),'utf8');
 function tools(){const c={window:{},URL};vm.runInNewContext(toolsSource,c);return c.window.NBCPlaybackTools}
 const state=()=>({queue:['a','b','c'],pos:0,manualEnd:1,primaryLength:3});
-test('added songs play before automatic continuation in addition order',()=>{const q=state(),t=tools();t.add(q,'d','a');t.add(q,'e','a');assert.deepEqual(q.queue,['a','d','e','b','c']);q.pos=1;t.add(q,'f','d');assert.deepEqual(q.queue,['a','d','e','f','b','c'])});
-test('queue can start empty and accept repeated songs',()=>{const q={queue:[],pos:-1,manualEnd:0},t=tools();t.add(q,'x');t.add(q,'x');assert.deepEqual(q.queue,['x','x']);assert.equal(q.pos,-1)});
-test('removing a future item preserves the current and subsequent insertion order',()=>{const q=state(),t=tools();t.add(q,'d');t.add(q,'e');assert.equal(t.remove(q,0),false);assert.equal(t.remove(q,1),true);t.add(q,'f');assert.deepEqual(q.queue,['a','e','f','b','c'])});
-test('shuffle changes only future songs and preserves all occurrences',()=>{const q=state(),t=tools();t.add(q,'d');t.add(q,'d');const before=q.queue.slice(1);t.shuffle(q,()=>0);assert.equal(q.queue[0],'a');assert.notDeepEqual(q.queue.slice(1),before);assert.deepEqual([...q.queue.slice(1)].sort(),before.sort());assert.equal(q.pos,0)});
-test('loop control never reorders or rebuilds the queue',()=>{const q=state(),before=JSON.stringify(q.queue),c={playback:{...q,repeat:false},localStorage:{setItem(){}},renderModes(){},toast(){}};vm.runInNewContext(app.split('\n').find(l=>l.startsWith('function toggleRepeat('))+';toggleRepeat();toggleRepeat()',c);assert.equal(JSON.stringify(c.playback.queue),before);assert.equal(c.playback.repeat,false)});
-test('next occurrence of the same track restarts at its queue position',async()=>{const q={queue:['a','a','b'],pos:0,history:[]},audio={paused:false,getAttribute:()=>'/media/a',load(){this.loaded=true},async play(){}},c={playback:q,audio,currentTrack:{id:'a',audio_key:'a'},trackById:()=>({id:'a',audio_key:'a'}),playSeq:0,mediaUrl:key=>'/media/'+key,updateNowUI(){},ensureQueue(){},localStorage:{setItem(){}},toast(){},setPlayState(){}};vm.runInNewContext(app.split('\n').find(l=>l.startsWith('async function playTrack(')),c);await vm.runInNewContext("playTrack('a',{queueIndex:1})",c);assert.equal(q.pos,1);assert.equal(audio.loaded,true);assert.equal(audio.src,'/media/a')});
+test('added songs play before automatic continuation in addition order',()=>{const q=state(),t=tools();t.add(q,'d','a');t.add(q,'e','a');assert.deepEqual([...q.queue],['a','d','e','b','c']);q.pos=1;t.add(q,'f','d');assert.deepEqual([...q.queue],['a','d','e','f','b','c'])});
+test('queue can start empty and accept repeated songs',()=>{const q={queue:[],pos:-1,manualEnd:0},t=tools();t.add(q,'x');t.add(q,'x');assert.deepEqual([...q.queue],['x','x']);assert.equal(q.pos,-1)});
+test('removing a future item preserves the current and subsequent insertion order',()=>{const q=state(),t=tools();t.add(q,'d');t.add(q,'e');assert.equal(t.remove(q,0),false);assert.equal(t.remove(q,1),true);t.add(q,'f');assert.deepEqual([...q.queue],['a','e','f','b','c'])});
+test('shuffle changes only future songs and preserves all occurrences',()=>{const q=state(),t=tools();t.add(q,'d');t.add(q,'d');const before=q.queue.slice(1);t.shuffle(q,()=>0);assert.equal(q.queue[0],'a');assert.notDeepEqual(q.queue.slice(1),before);assert.deepEqual([...q.queue.slice(1)].sort(),[...before].sort());assert.equal(q.pos,0)});
+test('loop control never reorders or rebuilds the queue',()=>{const q=state(),before=JSON.stringify(q.queue),c={playback:{...q,repeat:false},localStorage:{setItem(){}},renderModes(){},prepareNextTrack(){},toast(){}};vm.runInNewContext(app.split('\n').find(l=>l.startsWith('function toggleRepeat('))+';toggleRepeat();toggleRepeat()',c);assert.equal(JSON.stringify(c.playback.queue),before);assert.equal(c.playback.repeat,false)});
+test('next occurrence of the same track restarts at its queue position',async()=>{const q={queue:['a','a','b'],pos:0,history:[]},audio={paused:false,getAttribute:()=>'/media/a',load(){this.loaded=true},async play(){}},c={playback:q,audio,currentTrack:{id:'a',audio_key:'a'},trackById:()=>({id:'a',audio_key:'a'}),playSeq:0,failedTracks:new Set(),transport:{select:async url=>{audio.src=url;return true}},mediaUrl:key=>'/media/'+key,updateNowUI(){},ensureQueue(){},localStorage:{setItem(){}},toast(){},setPlayState(){}};vm.runInNewContext(app.slice(app.indexOf('async function playTrack('),app.indexOf('\nwindow.NBCPlayTrack')),c);await vm.runInNewContext("playTrack('a',{queueIndex:1})",c);assert.equal(q.pos,1);assert.equal(audio.src,'/media/a')});
 test('library refresh removes deleted entries without skipping the remaining queue',()=>{const q=state(),t=tools();t.add(q,'d');t.add(q,'e');t.reconcile(q,id=>id!=='d'&&id!=='b');t.add(q,'f');assert.deepEqual([...q.queue],['a','e','f','c']);assert.equal(q.pos,0)});
 test('media artwork uses absolute URLs, album cover metadata and a PNG fallback',()=>{const t=tools(),song={title:'Tema',artists:['A','B']},m=t.metadata(song,{title:'Álbum'},'/media/covers/test.webp','https://nbc.test');assert.equal(m.artwork[0].src,'https://nbc.test/media/covers/test.webp');assert.equal(m.artwork[0].type,'image/webp');assert.equal(m.artwork[0].sizes,undefined);assert.equal(m.album,'Álbum');const fallback=t.metadata(song,null,'','https://nbc.test');assert.equal(fallback.artwork[0].type,'image/png');assert.equal(fallback.artwork[0].sizes,'512x512');assert.equal(t.metadata(null,null,'','https://nbc.test'),null)});
 test('metadata changes immediately and stale image decoding cannot overwrite a newer cover',async()=>{
@@ -21,7 +21,7 @@ test('metadata changes immediately and stale image decoding cannot overwrite a n
  pending[0]();await new Promise(setImmediate);assert.equal(c.artworkData,null);
  pending[1]();await new Promise(setImmediate);assert.equal(c.navigator.mediaSession.metadata.title,'B');assert.equal(c.navigator.mediaSession.metadata.artwork[0].type,'image/png');assert.equal(c.navigator.mediaSession.metadata.artwork[0].sizes,'512x512');assert.deepEqual(JSON.parse(JSON.stringify(sizes)),[[512,512]]);
 });
-test('Play starts the first queued choice when nothing is selected',async()=>{const calls=[],c={currentTrack:null,playback:{queue:['chosen'],pos:-1},tracks:[{id:'default'}],playTrack:(id,opt)=>calls.push({id,opt}),buildQueue(){throw Error('must not rebuild')}};vm.runInNewContext(app.split('\n').find(l=>l.startsWith('async function startCurrent(')),c);await vm.runInNewContext('startCurrent()',c);assert.equal(calls[0].id,'chosen');assert.equal(calls[0].opt.queueIndex,0)});
+test('Play starts the first queued choice when nothing is selected',async()=>{const calls=[],c={currentTrack:null,playback:{queue:['chosen'],pos:-1},tracks:[{id:'default'}],playTrack:(id,opt)=>calls.push({id,opt}),buildQueue(){throw Error('must not rebuild')}};vm.runInNewContext(app.slice(app.indexOf('async function startCurrent('),app.indexOf('\nfunction nextTrack')),c);await vm.runInNewContext('startCurrent()',c);assert.equal(calls[0].id,'chosen');assert.equal(calls[0].opt.queueIndex,0)});
 
 test('shuffle never places the current song next or repeats adjacent duplicates',()=>{
  const t=tools(),q={queue:['a','a','b','b','c','c'],pos:0,manualEnd:1};t.shuffle(q,()=>0);
@@ -43,7 +43,17 @@ test('unavoidable duplicate-only runs are not played back to back in random mode
  assert.deepEqual([...t.randomSequence(['a','a','a'],null,()=>0)],['a']);
 });
 test('next skips newly added duplicates of the current track in random mode',()=>{
- const played=[],c={audio:{loop:false},playback:{queue:['a','a','a','b'],pos:0,shuffle:true,repeat:false},currentTrack:{id:'a'},ensureQueue(){},appendRadio(){},playTrack:(id,opt)=>played.push({id,index:opt.queueIndex}),setPlayState(){}};
- vm.runInNewContext(app.split('\n').find(l=>l.startsWith('function nextTrack('))+';nextTrack()',c);
+ const played=[],c={audio:{loop:false},playback:{queue:['a','a','a','b'],pos:0,shuffle:true,repeat:false},currentTrack:{id:'a'},ensureQueue(){},appendRadio(){},playTrack:(id,opt)=>played.push({id,index:opt.queueIndex}),setPlayState(){},transport:{pause(){}},queueTools:tools(),failedTracks:new Set()};
+ vm.runInNewContext(app.slice(app.indexOf('function nextTrack('),app.indexOf('\nfunction previousTrack'))+';nextTrack()',c);
  assert.deepEqual(played,[{id:'b',index:3}]);
+});
+
+test('manual additions after shuffle stay ahead of automatic songs even with an obsolete boundary',()=>{
+ const t=tools(),q=state();t.shuffle(q,()=>0);q.manualEnd=q.queue.length;t.add(q,'manual-one','a');t.add(q,'manual-two','a');
+ assert.deepEqual([...q.queue.slice(0,3)],['a','manual-one','manual-two']);assert.equal(t.isManual(q,1),true);assert.equal(t.isManual(q,3),false);
+});
+test('manual priority survives advancing, refreshing the library and going backwards',()=>{
+ const t=tools(),q=state();t.shuffle(q,()=>0);t.add(q,'first','a');t.add(q,'second','a');q.pos=1;t.reconcile(q,()=>true);t.add(q,'third','first');
+ assert.deepEqual([...q.queue.slice(2,4)],['second','third']);q.pos=0;t.add(q,'fourth','a');
+ assert.deepEqual([...q.queue.slice(1,4)],['second','third','fourth']);
 });
