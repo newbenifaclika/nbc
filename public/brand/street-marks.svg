@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<symbol id="arrow" viewBox="0 0 160 110"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13c24 68 61 73 127 41M102 32l39 19-19 36" stroke-width="6"/><path d="M12 20c30 65 68 68 120 37m-27-19 29 17-16 27" stroke-width="2"/></g></symbol>
+<symbol id="cross" viewBox="0 0 100 100"><path d="M13 14 86 85M77 8 19 90" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="square"/><path d="m14 20 69 64M73 10 17 86" fill="none" stroke="currentColor" stroke-width="3"/></symbol>
+<symbol id="spark" viewBox="0 0 100 100"><path d="m48 5 7 30 34-19-22 29 27 15-35-1-8 36-9-34-34 15 20-28L4 34l35 6z" fill="currentColor"/></symbol>
+<symbol id="scribble" viewBox="0 0 300 110"><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M12 72C48 15 283 4 284 51s-232 66-240 35S221 9 267 28" stroke-width="4"/><path d="M40 85C24 50 265 2 286 48S44 119 19 79" stroke-width="2"/></g></symbol>
+<symbol id="star" viewBox="0 0 100 100"><path d="m47 8 10 28 32-1-25 20 9 32-27-17-27 16 10-32L7 36l30 1z" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="m45 11 11 28 30-1-25 18 9 28-25-18-24 17 11-29L9 38" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+</svg>

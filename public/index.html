@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#08070b">
+  <meta name="theme-color" content="#080b09">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,6 +12,7 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icons/favicon-32.png?v=3" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-180.png?v=3">
+  <link rel="preload" href="/brand/abstract-tag.svg" as="image">
   <link rel="stylesheet" href="/app.css">
   <title>New BenifaClika</title>
 </head>
@@ -45,15 +46,17 @@
 
     <section id="view-home" class="view active">
       <div class="home-intro">
-      <div class="home-heading"><span class="urban-kicker">NEW BENIFACLIKA / ARCHIVO SONORO</span><h2>La música de la clika,<br><span>en un solo sitio.</span></h2><span class="hero-tag">SONIDO PROPIO.</span></div><div class="hero-art" aria-hidden="true"><span class="hero-orbit"></span><img src="/brand/nbc-logo.png" alt="" width="800" height="800" fetchpriority="high"><span class="hero-stamp">LA CLIKA<br>SIEMPRE SUENA.</span></div>
+      <div class="home-heading"><span class="urban-kicker"><i></i> NEW BENIFACLIKA · ARCHIVO SONORO</span><h2><span class="hero-line-one">La música</span><span class="hero-line-two">de la clika,</span><span class="hero-line-three">en un solo sitio.</span></h2><div class="hero-note"><svg class="street-mark note-arrow" aria-hidden="true"><use href="/brand/street-marks.svg#arrow"/></svg><span>SONIDO PROPIO.<br>Y PUNTO.</span></div></div>
+      <div class="hero-art" aria-hidden="true"><img class="abstract-tag" src="/brand/abstract-tag.svg" alt="" width="900" height="680" fetchpriority="high"><span class="hero-logo-sticker"><img src="/brand/nbc-logo.png" alt="" width="80" height="80"><span>BENIFA<br>CLIKA.</span></span><svg class="street-mark hero-cross"><use href="/brand/street-marks.svg#cross"/></svg><span class="hero-side-note">SUBE EL VOLUMEN.</span></div>
       <section class="anniversary-banner">
         <div class="anniversary-top"><span>1ER ANIVERSARIO</span><small id="anniversaryCounts">0 temas · 0 álbumes</small></div>
         <strong>🥂🖤 Broskis, açò només comença. Feliç aniversari BENIFACLIKAAAAA!!! 🎉🔥</strong>
       </section>
       </div>
-      <section class="content-section releases-section"><div class="section-head"><div><span class="section-index">01 / TEMAS SUELTOS</span><h2>Últimos sencillos</h2><p>Lo más nuevo, tema a tema.</p></div><button class="section-link" data-nav="songs">Ver todos <span aria-hidden="true">↗</span></button></div><div id="homeSingles" class="card-grid"></div></section>
-      <section class="content-section releases-section"><div class="section-head"><div><span class="section-index">02 / DE PRINCIPIO A FIN</span><h2>Últimos álbumes</h2><p>Cada proyecto, su propio universo.</p></div><button class="section-link" data-nav="albums">Ver todos <span aria-hidden="true">↗</span></button></div><div id="homeAlbums" class="card-grid"></div></section>
-      <section class="content-section"><div class="section-head"><div><span class="section-index">03 / LA FAMILIA</span><h2>Artistas</h2></div></div><div id="homeArtists" class="artist-strip"></div></section>
+      <div class="street-divider" aria-hidden="true"><span>DE LA CLIKA PARA LA CLIKA</span><svg class="street-mark"><use href="/brand/street-marks.svg#spark"/></svg><span>MÚSICA SIN FILTROS</span><svg class="street-mark"><use href="/brand/street-marks.svg#spark"/></svg><span>SONIDO PROPIO</span></div>
+      <section class="content-section releases-section singles-section"><div class="section-head"><div><h2>Últimos sencillos</h2><p>Lo más nuevo, tema a tema.</p></div><button class="section-link" data-nav="songs">Ver todos <span aria-hidden="true">↗</span></button></div><div id="homeSingles" class="card-grid"></div></section>
+      <section class="content-section releases-section albums-section"><div class="section-head"><div><h2>Últimos álbumes</h2><p>Cada proyecto, su propio universo.</p></div><button class="section-link" data-nav="albums">Ver todos <span aria-hidden="true">↗</span></button></div><div id="homeAlbums" class="card-grid"></div></section>
+      <section class="content-section artists-section"><div class="section-head"><div><h2>Artistas</h2></div></div><div id="homeArtists" class="artist-strip"></div></section>
     </section>
 
     <section id="view-songs" class="view"><div class="section-head page-head"><div><h2>Canciones</h2><p id="songsCount"></p></div></div><div id="songsList" class="track-list"></div><div id="songsLoadMoreWrap" class="load-more-wrap"></div></section>
@@ -66,7 +69,7 @@
       <div id="searchResults"></div>
     </section>
     <footer class="site-footer">
-      <div class="footer-top"><button class="footer-brand" data-nav="home" aria-label="Inicio de New BenifaClika"><img src="/icons/app-192.png" alt="" width="44" height="44"><span>NEW<br>BENIFACLIKA<span class="footer-dot">✳</span></span></button><p>La música de la clika, en un solo sitio.</p><span class="footer-credit">Made by <strong>srthegato</strong></span></div>
+      <div class="footer-wall" aria-hidden="true"><span>BENIFACLIKA.</span><svg class="street-mark"><use href="/brand/street-marks.svg#scribble"/></svg></div><div class="footer-top"><button class="footer-brand" data-nav="home" aria-label="Inicio de New BenifaClika"><img src="/icons/app-192.png" alt="" width="44" height="44"><span>NEW<br>BENIFACLIKA<span class="footer-dot">✳</span></span></button><p>La música de la clika, en un solo sitio.</p><span class="footer-credit">Made by <strong>srthegato</strong></span></div>
       <div class="footer-bottom"><p>© <span id="copyrightYear">2026</span> New BenifaClika. Todos los derechos reservados.<br>La música y las imágenes pertenecen a sus respectivos autores.</p><details class="privacy-note"><summary>Privacidad y cookies</summary><p>El código de esta web no incorpora cookies publicitarias ni herramientas de seguimiento. El modo edición utiliza una cookie de sesión necesaria para mantener el acceso. El navegador guarda tus preferencias de reproducción, la caché de la app y los borradores de subida.</p></details></div>
     </footer>
   </main>
