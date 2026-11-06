@@ -605,8 +605,13 @@ html{scroll-padding-bottom:calc(var(--player-height) + var(--space))}
 .suggest-item span,.suggest-item small,.suggest-more{font-size:var(--text-xs)}
 .site-footer{padding-top:calc(var(--space) * 2.5)}
 .footer-bottom{flex-wrap:wrap;gap:var(--space);font-size:var(--text-xs)}
-.footer-social{display:flex;gap:var(--space)}
-.footer-social a{color:#b8d4c1;text-decoration:none;display:inline-flex;align-items:center;min-height:32px}.footer-social a:hover{text-decoration:underline}
+.footer-social{display:flex;flex-wrap:wrap;gap:clamp(6px,1.2vw,12px)}
+.footer-social a{
+  display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:8px clamp(8px,1.5vw,12px);
+  border:1px solid var(--line2);border-radius:10px;background:var(--panel2);color:var(--text);
+  text-decoration:none;font-size:var(--text-sm);font-weight:650;
+}
+.footer-social a:hover{background:var(--panel3)}
 .player{max-width:none;left:0;right:0;bottom:0;min-height:var(--player-height);border:0;border-top:1px solid #354d3e;border-radius:0;padding:calc(var(--space) * .6) var(--gutter);gap:var(--space);grid-template-columns:minmax(0,1fr) minmax(17rem,1.65fr) minmax(8rem,1fr)}
 .player-cover{width:clamp(3.25rem,4vw,5rem);height:auto;aspect-ratio:1}
 .player-meta strong{font-size:var(--text-md)}
@@ -690,9 +695,7 @@ html{scroll-padding-bottom:calc(var(--player-height) + var(--space))}
   .mobile-nav{height:calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));padding-inline:clamp(.25rem,1.1vw,.625rem)}
   .mobile-nav button{gap:clamp(2px,.8vw,5px)}
   .footer-bottom{display:flex}
-  .footer-social{width:100%;flex-wrap:wrap}
-  .footer-social a{min-height:44px;padding:8px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--panel2);color:var(--text);font-size:var(--text-sm);font-weight:650}
-  .footer-social a:hover{background:var(--panel3);text-decoration:none}
+  .footer-social{width:100%}
   .privacy-note{margin:0}
   .now-sheet{display:flex;flex-direction:column;padding-top:calc(20px + env(safe-area-inset-top));padding-bottom:calc(var(--space) + env(safe-area-inset-bottom))}
   .now-sheet-header{flex:none}
@@ -745,7 +748,6 @@ html{scroll-padding-bottom:calc(var(--player-height) + var(--space))}
 }
 
 /* Listener accounts and saved songs. */
-.footer-social a{gap:7px}
 .social-logo{width:18px;height:18px;flex:0 0 auto}
 .instagram-logo{fill:none;stroke:#ef9bb7;stroke-width:1.8}.instagram-logo .social-dot{fill:#ef9bb7;stroke:none}
 .account-btn{min-height:42px;white-space:nowrap;flex-shrink:0}
