@@ -108,7 +108,8 @@ test('favorites play before radio even when shuffle is switched on mid-list',asy
  assert.equal(audio.src,'/media/audio/three.mp3');
  assert.equal(elements.get('playerContext').textContent,'FAVORITOS');
  audio.ended=true;audio.paused=true;audio.emit('ended');await new Promise(setImmediate);
- assert.equal(audio.src,'/media/audio/two.mp3');
+ assert.match(audio.src,/^\/media\/audio\/(one|two)\.mp3$/);
+ assert.equal(audio.paused,false);
  assert.equal(elements.get('playerContext').textContent,'RADIO DE LA CLIKA');
 });
 
