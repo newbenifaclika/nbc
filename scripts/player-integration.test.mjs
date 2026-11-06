@@ -23,7 +23,7 @@ class Audio extends Element{
  load(){this.calls.push('load')}
  emit(type){for(const fn of this.events[type]||[])fn({target:this})}
 }
-async function boot({albumMode=false}={}){
+async function boot({albumMode=false,favorites=null,view='home'}={}){
  const elements=new Map(),events={},winEvents={},audio=new Audio();elements.set('audio',audio);
  const document={hidden:false,visibilityState:'visible',title:'',activeElement:null,getElementById:id=>{if(!elements.has(id))elements.set(id,new Element(id));return elements.get(id)},querySelector:selector=>document.getElementById(selector),querySelectorAll:()=>[],addEventListener:(name,fn)=>(events[name]||=[]).push(fn)};
  const tracks=['one','two','three'].map((id,i)=>({id,title:'Song '+id,artists:['Artist'],audio_key:'audio/'+id+'.mp3',album_id:null,cover_key:'covers/'+id+'.webp',created_at:'2026-01-0'+(3-i),duration_seconds:180}));
@@ -33,7 +33,7 @@ async function boot({albumMode=false}={}){
  let nativeReady=true,notification=null,metadata=null;
  const session={setActionHandler(name,fn){handlers[name]=fn},setPositionState(value){positions.push(value)},get metadata(){return metadata},set metadata(value){metadata=value;published.push(value);if(nativeReady)notification=value}};
  audio.onNativePlay=()=>{starts.push({src:audio.src,metadata:session.metadata,position:positions.at(-1)});nativeReady=false;notification=null};
- const c={document,Audio,Image:class{},URL,URLSearchParams,Blob,File,Response,Promise,console,setTimeout,clearTimeout,structuredClone,innerWidth:390,scrollTo(){},matchMedia:()=>({matches:false,addEventListener(){}}),navigator:{onLine:true,userAgent:'Android Chrome',connection:{saveData:false},mediaSession:session},MediaMetadata:class{constructor(data){Object.assign(this,data)}},location:new URL('https://nbc.test/'),history:{state:null,replaceState(state){this.state=state},pushState(state){this.state=state}},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value)},fetch:async path=>new Response(JSON.stringify(path==='/api/bootstrap'?{tracks,albums:albumList,artists:[{name:'Artist'}]}:{authenticated:false}),{status:200,headers:{'Content-Type':'application/json'}})};
+ const c={document,Audio,Image:class{},URL,URLSearchParams,Blob,File,Response,Promise,console,setTimeout,clearTimeout,structuredClone,innerWidth:390,scrollTo(){},matchMedia:()=>({matches:false,addEventListener(){}}),navigator:{onLine:true,userAgent:'Android Chrome',connection:{saveData:false},mediaSession:session},MediaMetadata:class{constructor(data){Object.assign(this,data)}},location:new URL('https://nbc.test/?view='+view),history:{state:null,replaceState(state){this.state=state},pushState(state){this.state=state}},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value)},fetch:async path=>new Response(JSON.stringify(path==='/api/bootstrap'?{tracks,albums:albumList,artists:[{name:'Artist'}]}:path==='/api/listener'&&favorites?{username:'Listener',favorites}:{authenticated:false}),{status:200,headers:{'Content-Type':'application/json'}})};
  c.window=c;c.addEventListener=(name,fn)=>(winEvents[name]||=[]).push(fn);
  vm.createContext(c);
  for(const path of ['public/playback-tools.js','public/audio-runtime.js','public/app.js'])vm.runInContext(fs.readFileSync(new URL('../'+path,import.meta.url),'utf8'),c);
@@ -93,4 +93,28 @@ test('album cards open details and album playback continues into the library aft
  c.NBCPlayAlbum('record');await new Promise(setImmediate);
  assert.equal(audio.src,'/media/audio/one.mp3');
  c.NBCPlayTrack('one');await new Promise(setImmediate);assert.equal(audio.paused,true);
+});
+
+test('favorites play before radio even when shuffle is switched on mid-list',async()=>{
+ const {elements,audio}=await boot({favorites:['one','three'],view:'favorites'});
+ const button=elements.get('playFavoritesBtn');
+ assert.equal(button.hidden,false);
+ button.onclick();await new Promise(setImmediate);
+ assert.equal(audio.paused,false);
+ assert.equal(audio.src,'/media/audio/one.mp3');
+ assert.equal(elements.get('playerContext').textContent,'FAVORITOS');
+ elements.get('shuffleBtn').onclick();
+ audio.ended=true;audio.paused=true;audio.emit('ended');await new Promise(setImmediate);
+ assert.equal(audio.src,'/media/audio/three.mp3');
+ assert.equal(elements.get('playerContext').textContent,'FAVORITOS');
+ audio.ended=true;audio.paused=true;audio.emit('ended');await new Promise(setImmediate);
+ assert.equal(audio.src,'/media/audio/two.mp3');
+ assert.equal(elements.get('playerContext').textContent,'RADIO DE LA CLIKA');
+});
+
+test('the favorites play button stays hidden for guests and empty libraries',async()=>{
+ for(const favorites of [null,[],['removed']]){
+  const {elements}=await boot({favorites,view:'favorites'});
+  assert.equal(elements.get('playFavoritesBtn').hidden,true);
+ }
 });

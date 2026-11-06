@@ -7,6 +7,7 @@ function add(state,id,currentId=null){
  if(!state.queue.length&&currentId){state.queue=[currentId];state.pos=0}
  const next=Math.max(0,state.pos+1),pending=pendingManual(state),indices=new Set(pending.map(entry=>entry.index)),ids=[...pending.map(entry=>entry.id),id];
  const automatic=state.queue.slice(next).filter((_,offset)=>!indices.has(next+offset));
+ if(state.source?.type==='favorites'&&next<=state.primaryLength)state.primaryLength++;
  state.queue=[...state.queue.slice(0,next),...ids,...automatic];state.manualEntries=ids.map((id,offset)=>({id,index:next+offset}));manualEnd(state);
  return next+ids.length-1;
 }
@@ -34,8 +35,15 @@ function randomSequence(ids,previous=null,random=Math.random){
  return result;
 }
 function shuffle(state,random=Math.random){
- const next=Math.max(0,state.pos+1),future=randomSequence(state.queue.slice(next),state.queue[state.pos]??null,random);
- state.queue=[...state.queue.slice(0,next),...future];state.manualEntries=[];state.manualEnd=next;
+ const next=Math.max(0,state.pos+1),past=state.queue.slice(0,next);
+ let boundary=next;
+ if(state.source?.type==='favorites'&&next<state.primaryLength){
+  boundary=state.primaryLength;
+  past.push(...randomSequence(state.queue.slice(next,boundary),past.at(-1),random));
+  state.primaryLength=past.length;
+ }
+ const future=randomSequence(state.queue.slice(boundary),past.at(-1),random);
+ state.queue=[...past,...future];state.manualEntries=[];state.manualEnd=next;
 }
 function reconcile(state,exists){
  const queue=state.queue,pending=pendingManual(state),indices=new Map(),kept=[];

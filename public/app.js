@@ -84,11 +84,11 @@ function renderSuggestions(v){const box=$('searchSuggest');if(!v.trim()){box.cla
 function openSearch(v){$('searchSuggest').classList.remove('show');$('globalSearch').value=v;showView('search');pushRoute({view:'search',query:v})}function renderSearch(v){const r=searchData(v),f=searchFilter;$('searchSummary').textContent=v?`Resultados para “${v}”`:'Escribe algo para buscar';let h='';if(f==='all'||f==='artists')h+=`<section class="search-group"><div class="search-group-head"><h3>Artistas</h3><span>${r.artists.length}</span></div><div class="card-grid">${r.artists.map(artistCard).join('')||'<div class="search-empty">Sin artistas.</div>'}</div></section>`;if(f==='all'||f==='albums')h+=`<section class="search-group"><div class="search-group-head"><h3>Álbumes</h3><span>${r.albums.length}</span></div><div class="card-grid">${r.albums.map(albumCard).join('')||'<div class="search-empty">Sin álbumes.</div>'}</div></section>`;if(f==='all'||f==='tracks')h+=`<section class="search-group"><div class="search-group-head"><h3>Canciones</h3><span>${r.tracks.length}</span></div><div class="track-list">${r.tracks.map(trackRow).join('')||'<div class="search-empty">Sin canciones.</div>'}</div></section>`;$('searchResults').innerHTML=h}
 let searchTimer;$('globalSearch').oninput=e=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderSuggestions(e.target.value),100)};$('globalSearch').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();openSearch(e.target.value)}};document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap'))$('searchSuggest').classList.remove('show')});$$('#searchFilters .chip').forEach(b=>b.onclick=()=>{$$('#searchFilters .chip').forEach(x=>x.classList.remove('active'));b.classList.add('active');searchFilter=b.dataset.filter;renderSearch($('globalSearch').value)});
 function shuffleArray(a){const o=[...a];for(let i=o.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[o[i],o[j]]=[o[j],o[i]]}return o}
-function sourceIds(source){if(source.type==='album')return(albumById(source.id)?.tracks||[]).map(t=>t.id);if(source.type==='artist')return tracks.filter(t=>trackArtists(t).includes(source.id)).map(t=>t.id);return tracks.map(t=>t.id)}
-function appendRadio(count=28){const seen=new Set(playback.queue),pool=tracks.map(t=>t.id).filter(id=>!seen.has(id));let candidates=playback.shuffle?queueTools.randomSequence(pool,playback.queue.at(-1)):pool;if(!candidates.length){playback.radioSeen.clear();candidates=tracks.map(t=>t.id).filter(id=>id!==currentTrack?.id);if(playback.shuffle)candidates=queueTools.randomSequence(candidates,playback.queue.at(-1))}playback.queue.push(...candidates.slice(0,count))}
+function sourceIds(source){if(source.type==='favorites')return favoriteTracks().map(t=>t.id);if(source.type==='album')return(albumById(source.id)?.tracks||[]).map(t=>t.id);if(source.type==='artist')return tracks.filter(t=>trackArtists(t).includes(source.id)).map(t=>t.id);return tracks.map(t=>t.id)}
+function appendRadio(count=28){const seen=new Set(playback.queue),pool=tracks.map(t=>t.id).filter(id=>!seen.has(id));let candidates=playback.shuffle?queueTools.randomSequence(pool,playback.queue.at(-1)):pool;if(!candidates.length){playback.radioSeen.clear();const previous=playback.source.type==='favorites'?playback.queue.at(-1):currentTrack?.id;candidates=tracks.map(t=>t.id).filter(id=>id!==previous);if(playback.shuffle)candidates=queueTools.randomSequence(candidates,playback.queue.at(-1))}playback.queue.push(...candidates.slice(0,count))}
 function buildQueue(source,startId=null){let ids=sourceIds(source);if(playback.shuffle)ids=shuffleArray(ids);if(startId&&ids.includes(startId)){const i=ids.indexOf(startId);ids=[startId,...ids.slice(0,i),...ids.slice(i+1)]}playback.queue=ids;playback.pos=0;playback.manualEnd=1;playback.manualEntries=[];playback.primaryLength=ids.length;playback.source=source;playback.history=[];if(playback.queue.length<10)appendRadio();}
 function ensureQueue(){if(playback.queue.length-playback.pos<8)appendRadio();prepareNextTrack();renderQueue()}
-function contextText(){if(playback.pos>=playback.primaryLength)return'RADIO DE LA CLIKA';if(playback.source.type==='album')return`ÁLBUM · ${String(playback.source.name||'').toUpperCase()}`;if(playback.source.type==='artist')return`ARTISTA · ${String(playback.source.name||'').toUpperCase()}`;return'RADIO DE LA CLIKA'}
+function contextText(){if(playback.pos>=playback.primaryLength)return'RADIO DE LA CLIKA';if(playback.source.type==='favorites')return'FAVORITOS';if(playback.source.type==='album')return`ÁLBUM · ${String(playback.source.name||'').toUpperCase()}`;if(playback.source.type==='artist')return`ARTISTA · ${String(playback.source.name||'').toUpperCase()}`;return'RADIO DE LA CLIKA'}
 function needsPlaybackResume(){return audio.paused||audio.ended||!!audio.error||transport.recoveryNeeded||transport.blocked}
 function setPlayState(){if(document.hidden){return}const loading=!!currentTrack&&(isStarting||isBuffering),playing=!!currentTrack&&!audio.paused&&!audio.ended&&!audio.error&&!transport.recoveryNeeded&&!loading;['playBtn','nowPlayBtn'].forEach(id=>{const b=$(id);b?.classList.toggle('loading',loading);const i=b?.querySelector('.play-icon');if(i)i.innerHTML=playing?ICONS.pause:ICONS.play;b?.setAttribute('aria-label',playing?'Pausar':'Reproducir');b?.setAttribute('title',playing?'Pausar':'Reproducir')});$('player').classList.toggle('playing',playing);$$('[data-track-id]').forEach(r=>r.classList.toggle('playing',playing&&r.dataset.trackId===currentTrack?.id));syncPlaybackCards();renderQueue()}
 function renderModes(){[['shuffleBtn',playback.shuffle],['nowShuffleBtn',playback.shuffle],['repeatBtn',playback.repeat],['nowRepeatBtn',playback.repeat]].forEach(([id,on])=>{const b=$(id);if(!b)return;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));const s=b.querySelector('small');if(s)s.textContent=on?'ON':'OFF'});audio.loop=playback.repeat}
@@ -611,14 +611,20 @@ function favoriteButton(track,card=false){
  const saved=favoriteIds.has(track.id), label=saved?'Quitar de favoritos':'Guardar en favoritos';
  return `<button type="button" class="${card?'card-favorite':'circle-btn'} favorite-btn" data-favorite-id="${esc(track.id)}" aria-pressed="${saved}" aria-label="${label}: ${esc(track.title)}" title="${label}"${savingFavorites.has(track.id)?' disabled':''}>${HEART_ICON}</button>`;
 }
+function favoriteTracks(){return [...favoriteIds].map(trackById).filter(track=>track?.audio_key)}
+$('playFavoritesBtn').onclick=()=>{
+ if(!listener||!favoriteTracks().length)return;
+ buildQueue({type:'favorites',id:null,name:'Favoritos'});
+ playTrack(playback.queue[0],{queueIndex:0});
+};
 function renderFavorites(){
- const count=$('favoritesCount'),list=$('favoritesList');
+ const count=$('favoritesCount'),list=$('favoritesList'),saved=listener?favoriteTracks():[];
+ $('playFavoritesBtn').hidden=!saved.length;
  if(!listener){
   count.textContent='Tu lista personal';
   list.innerHTML='<div class="search-empty"><strong>Guarda las canciones que más te gustan.</strong><button type="button" class="primary" data-listener-account>Entrar o crear una cuenta</button></div>';
   return;
  }
- const saved=[...favoriteIds].map(trackById).filter(Boolean);
  count.textContent=`${saved.length} ${saved.length===1?'canción guardada':'canciones guardadas'}`;
  list.innerHTML=saved.length?saved.map(t=>trackRow(t)).join(''):'<div class="search-empty">Pulsa el corazón de una canción para guardarla aquí.</div>';
 }
