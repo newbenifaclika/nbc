@@ -1,5 +1,5 @@
-const CACHE='nbc-cloudflare-v17';
-const SHELL=['/','/index.html','/app.css','/app.js','/manifest.webmanifest','/icon.svg','/album-draft.js','/playback-tools.js','/audio-runtime.js','/icons/app-192.png','/icons/app-512.png','/icons/apple-touch-180.png'];
+const CACHE='nbc-cloudflare-v18';
+const SHELL=['/','/index.html','/app.css','/app.js','/manifest.webmanifest','/album-draft.js','/playback-tools.js','/audio-runtime.js','/brand/nbc-logo.png','/icons/app-maskable-512.png?v=3','/icons/app-192.png?v=3','/icons/app-512.png?v=3','/icons/favicon-32.png?v=3','/icons/app-192.png','/icons/app-512.png','/icons/apple-touch-180.png?v=3','/icons/apple-touch-180.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',event=>{
